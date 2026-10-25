@@ -49,7 +49,11 @@
     <p class="muted">Log in first. Submit one genuine profile application; it will stay pending until an administrator reviews it.</p>  
     <form id="joinForm">  
       <div class="field"><label for="joinName">Display name *</label><input id="joinName" maxlength="45" required placeholder="Your display name"></div>  
-      <div class="field"><label for="joinPhoto">Profile photo URL *</label><input id="joinPhoto" type="url" required placeholder="https://example.com/photo.jpg"></div>  
+    <div class="field">
+  <label for="joinPhoto">Choose Profile Photo *</label>
+  <input id="joinPhoto" type="file" accept="image/*" required>
+  <p class="small">Select a photo from your gallery.</p>
+    </div>
       <div class="field"><label for="joinSocial">Social media username *</label><input id="joinSocial" maxlength="80" required placeholder="@yourusername"></div>  
       <div class="field"><label for="joinPlatform">Social media platform *</label><select id="joinPlatform" required><option value="">Select platform</option><option>TikTok</option><option>Instagram</option><option>YouTube</option><option>X</option><option>Facebook</option><option>Other</option></select></div>  
       <div class="field"><label for="joinLink">Social profile link (optional)</label><input id="joinLink" type="url" placeholder="https://..."></div>  
