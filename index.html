@@ -241,7 +241,7 @@ $("logoutButton").addEventListener("click",async()=>{
 });  
 async function loadAdmin(){  
   if(!currentUser||currentRole!=="admin"){$("adminList").innerHTML='<div class="panel">Admin access required.</div>';return;}  
-  const {data,error}=await sb.from("members").select("*").or("approved.eq.false,status.eq.pending").order("created_at",{ascending:false});  
+  const {data,error}=await sb.from("members").select("*").eq("status","pending").order("created_at",{ascending:false});
   if(error){$("adminList").innerHTML=`<div class="panel">Could not load applications: ${escapeHTML(error.message)}</div>`;return;}  
   $("applicationTotal").textContent=(data||[]).length;  
   $("adminList").innerHTML=(data||[]).length?(data||[]).map(m=>`<article class="card"><div class="member"><img class="avatar" src="${escapeHTML(memberPhoto(m))}" alt="" onerror="this.style.visibility='hidden'"><div><h3>${escapeHTML(memberName(m))}</h3><p class="muted">${escapeHTML(m.social_username??m.social??"")} · ${escapeHTML(m.platform??"")}</p><p>${escapeHTML(m.bio??"")}</p><p class="small">Category: ${escapeHTML(memberCategory(m))}</p><div class="actions"><button class="primary" data-approve="${escapeHTML(m.id)}">Approve</button><button class="secondary" data-reject="${escapeHTML(m.id)}">Reject</button></div></div></div></article>`).join(""):'<div class="panel empty">No pending applications.</div>';  
