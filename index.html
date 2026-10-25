@@ -207,7 +207,15 @@ $("joinForm").addEventListener("submit",async e=>{
   const category = $("joinCategory").value;
   const bio = $("joinBio").value.trim();
 
-  if (!name || !photoFile || !social || !platform || !bio) {
+if (!name || !photoFile || !social || !platform || !bio) {
+  return showMessage("joinMessage", 
+    "Missing fields: " +
+    (!name ? "Name " : "") +
+    (!photoFile ? "Photo " : "") +
+    (!social ? "Social Username " : "") +
+    (!platform ? "Platform " : "") +
+    (!bio ? "Bio " : ""), true);
+  } {
     return showMessage("joinMessage", "Please complete all required fields.", true);
   }
 
