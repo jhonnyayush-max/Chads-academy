@@ -1,816 +1,278 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#090909">
-<meta name="description" content="Chad Academy — Rankings, profiles, battles and community voting. Join the rankings and make your name known.">
-<title>Chad Academy — Rankings & Battles</title>
-
-<style>
-:root {
-  --bg:#090909;
-  --card:#151515;
-  --red:#ff303b;
-  --text:#f5f5f5;
-  --muted:#a5a5a5;
-  --border:#292929;
-}
-*{box-sizing:border-box}
-body {
-  margin:0;
-  background:var(--bg);
-  color:var(--text);
-  font-family:Arial,Helvetica,sans-serif;
-}
-button,input,textarea,select{font:inherit}
-button{cursor:pointer}
-header{
-  background:#101010;
-  border-bottom:1px solid var(--border);
-  padding:17px 5%;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:15px;
-  position:sticky;
-  top:0;
-  z-index:10;
-}
-.logo{font-size:22px;font-weight:900}
-.logo span{color:var(--red)}
-nav{display:flex;gap:8px;flex-wrap:wrap}
-nav button,.secondary{
-  background:#202020;
-  color:white;
-  border:1px solid #333;
-  padding:9px 12px;
-  border-radius:8px;
-}
-nav button.active,.primary{
-  background:var(--red);
-  color:white;
-  border:0;
-  padding:10px 15px;
-  border-radius:8px;
-  font-weight:bold;
-}
-.container{max-width:1100px;margin:auto;padding:25px 16px}
-.hero{
-  background:linear-gradient(135deg,#25090b,#111 65%);
-  border:1px solid #492024;
-  border-radius:18px;
-  padding:35px 22px;
-  text-align:center;
-}
-.hero h1{font-size:clamp(30px,6vw,54px);margin:0 0 12px}
-.hero h1 span{color:var(--red)}
-.hero p{color:#ccc;line-height:1.6}
-.hero .primary{margin-top:10px}
-.stats{
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:12px;
-  margin:20px 0;
-}
-.stat,.card{
-  background:var(--card);
-  border:1px solid var(--border);
-  border-radius:12px;
-  padding:18px;
-}
-.stat{text-align:center}
-.stat strong{display:block;font-size:25px;color:var(--red)}
-.stat small{color:var(--muted)}
-.section{margin-top:30px}
-.section-title{
-  display:flex;justify-content:space-between;
-  align-items:center;gap:10px;flex-wrap:wrap
-}
-h2{font-size:23px}
-.muted{color:var(--muted)}
-.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:15px 0}
-.tab{
-  background:#191919;color:#ccc;
-  border:1px solid #333;border-radius:8px;padding:10px 13px
-}
-.tab.active{background:#351014;color:white;border-color:var(--red)}
-input,textarea,select{
-  width:100%;padding:12px;background:#0e0e0e;
-  color:white;border:1px solid #393939;border-radius:8px;
-  margin:6px 0 14px;outline:none
-}
-input:focus,textarea:focus,select:focus{border-color:var(--red)}
-label{font-size:14px;color:#ddd}
-.grid{
-  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px
-}
-.member{
-  display:flex;align-items:center;gap:13px;
-  background:var(--card);border:1px solid var(--border);
-  padding:14px;border-radius:12px;cursor:pointer;
-  transition:.2s;min-width:0
-}
-.member:hover{border-color:var(--red);transform:translateY(-2px)}
-.avatar{
-  width:62px;height:62px;flex-shrink:0;border-radius:50%;
-  background:#292929;object-fit:cover;border:2px solid #383838
-}
-.member-info{flex:1;min-width:0}
-.member-info h3{margin:0 0 6px;overflow-wrap:anywhere}
-.member-info p{margin:4px 0;color:var(--muted);font-size:13px}
-.rank{color:var(--red);font-weight:900;font-size:20px;min-width:34px}
-.vote{
-  background:#291013;color:white;border:1px solid #6c252a;
-  padding:8px 10px;border-radius:8px
-}
-.vote:disabled{opacity:.45;cursor:not-allowed}
-.badge{
-  display:inline-block;background:#321014;color:#ff777e;
-  padding:5px 8px;border-radius:6px;font-size:12px
-}
-.hidden{display:none!important}
-.panel{
-  background:var(--card);border:1px solid var(--border);
-  border-radius:14px;padding:20px;margin-top:20px
-}
-.profile-head{text-align:center}
-.profile-photo{
-  width:110px;height:110px;border-radius:50%;
-  object-fit:cover;border:3px solid var(--red)
-}
-.profile-name{font-size:28px;margin:12px 0 6px}
-.profile-stats{
-  display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:20px 0
-}
-.profile-stats div{background:#0c0c0c;padding:14px;border-radius:9px;text-align:center}
-.profile-stats strong{display:block;color:var(--red);font-size:20px}
-.history-item{padding:12px 0;border-bottom:1px solid var(--border);font-size:14px}
-.history-item:last-child{border:0}
-.battle{
-  display:grid;grid-template-columns:1fr auto 1fr;gap:12px;
-  align-items:center;text-align:center
-}
-.battle img{width:65px;height:65px;object-fit:cover;border-radius:50%}
-.battle button{margin-top:8px}
-.empty{text-align:center;color:var(--muted);padding:30px}
-footer{
-  border-top:1px solid var(--border);text-align:center;
-  padding:25px;color:var(--muted);margin-top:40px;font-size:13px
-}
-a{color:#ff6c74;text-decoration:none;overflow-wrap:anywhere}
-.notice{font-size:12px;color:#aaa;line-height:1.6}
-.toast{
-  position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
-  background:#252525;border:1px solid #555;padding:12px 18px;
-  border-radius:9px;z-index:99;max-width:90%;text-align:center
-}
-@media(max-width:650px){
-  header{padding:13px 4%;align-items:flex-start;flex-direction:column}
-  nav{width:100%}
-  nav button{flex:1;padding:9px 5px;font-size:12px}
-  .container{padding:18px 12px}
-  .grid{grid-template-columns:1fr}
-  .stats{gap:7px}
-  .stat{padding:12px 5px}
-  .stat strong{font-size:21px}
-  .stat small{font-size:11px}
-  .hero{padding:28px 14px}
-  .profile-stats{gap:6px}
-  .profile-stats div{padding:10px 4px}
-  .profile-stats strong{font-size:17px}
-}
-</style>
-</head>
-
-<body>
-
-<header>
-  <div class="logo">CHAD <span>ACADEMY</span></div>
-  <nav>
-    <button class="active" data-page="home">Home</button>
-    <button data-page="rankings">Rankings</button>
-    <button data-page="battles">Battles</button>
-    <button data-page="join">Get Listed</button>
-    <button data-page="account">Login</button>
-  </nav>
-</header>
-
-<main class="container">
-
-<!-- HOME -->
-<section id="home" class="page">
-  <div class="hero">
-    <span class="badge">THE COMMUNITY RANKING PLATFORM</span>
-    <h1>WELCOME TO <span>CHAD ACADEMY</span></h1>
-    <p>Discover members, explore their profiles, vote for your favourites
-    and compete for a place in the rankings.</p>
-    <button class="primary" onclick="showPage('rankings')">Explore Rankings</button>
-    <button class="secondary" onclick="showPage('join')">Get Listed</button>
-  </div>
-
-  <div class="stats">
-    <div class="stat"><strong id="totalMembers">0</strong><small>Members</small></div>
-    <div class="stat"><strong id="totalVotes">0</strong><small>Total Votes</small></div>
-    <div class="stat"><strong>2</strong><small>Rank Categories</small></div>
-  </div>
-
-  <div class="section">
-    <div class="section-title">
-      <h2>🏆 Top Members</h2>
-      <button class="secondary" onclick="showPage('rankings')">View All →</button>
-    </div>
-    <div id="homeTop" class="grid"></div>
-  </div>
-
-  <div class="section card">
-    <h2>🔴 Join Chad Academy</h2>
-    <p class="muted">Create your member profile and submit it for listing.</p>
-    <button class="primary" onclick="showPage('join')">Apply Now</button>
-  </div>
-</section>
-
-<!-- RANKINGS -->
-<section id="rankings" class="page hidden">
-  <h1>🏆 Rankings</h1>
-  <p class="muted">Open any member's profile to see their bio and history.</p>
-
-  <div class="tabs">
-    <button class="tab active" data-category="chads">Chads Ranking</button>
-    <button class="tab" data-category="potential">HTN & Potential</button>
-  </div>
-
-  <input id="search" placeholder="Search members by name or username...">
-  <p class="notice">Maximum capacity: 1,000 members per category. Ranking is
-  based on points in this demo.</p>
-  <div id="rankingList" class="grid"></div>
-</section>
-
-<!-- PROFILE -->
-<section id="profile" class="page hidden">
-  <button class="secondary" onclick="showPage('rankings')">← Back to Rankings</button>
-  <div id="profileContent"></div>
-</section>
-
-<!-- BATTLES -->
-<section id="battles" class="page hidden">
-  <h1>⚔️ Member Battles</h1>
-  <p class="muted">Choose which member you support.</p>
-  <div class="panel">
-    <label>First member</label>
-    <select id="battleA"></select>
-    <label>Second member</label>
-    <select id="battleB"></select>
-    <button class="primary" onclick="startBattle()">Show Battle</button>
-  </div>
-  <div id="battleResult"></div>
-</section>
-
-<!-- JOIN -->
-<section id="join" class="page hidden">
-  <h1>🚀 Get Listed</h1>
-  <p class="muted">Submit your details for the ranking.</p>
-  <div class="panel">
-    <form id="joinForm">
-      <label>Display name *</label>
-      <input id="joinName" maxlength="45" required placeholder="Your display name">
-
-      <label>Profile photo URL *</label>
-      <input id="joinPhoto" type="url" required placeholder="https://example.com/photo.jpg">
-
-      <label>Social media username *</label>
-      <input id="joinSocial" maxlength="80" required placeholder="@yourusername">
-
-      <label>Social media platform *</label>
-      <select id="joinPlatform" required>
-        <option value="">Select platform</option>
-        <option>TikTok</option>
-        <option>Instagram</option>
-        <option>YouTube</option>
-        <option>X</option>
-        <option>Facebook</option>
-        <option>Other</option>
-      </select>
-
-      <label>Social profile link (optional)</label>
-      <input id="joinLink" type="url" placeholder="https://...">
-
-      <label>Category *</label>
-      <select id="joinCategory" required>
-        <option value="chads">Chads Ranking</option>
-        <option value="potential">HTN & Potential</option>
-      </select>
-
-      <label>Your bio *</label>
-      <textarea id="joinBio" maxlength="500" rows="4" required
-      placeholder="Tell people about yourself..."></textarea>
-
-      <button class="primary" type="submit">Submit Application</button>
-    </form>
-    <p class="notice">Demo version: applications are saved only in this browser.
-    This form does not yet send an application to a real administrator.</p>
-  </div>
-</section>
-
-<!-- LOGIN -->
-<section id="account" class="page hidden">
-  <h1>🔐 Chad Academy Account</h1>
-
-  <div class="panel">
-    <p id="authStatus" class="muted">Checking account status...</p>
-
-    <div id="authForms">
-      <h2>Create Account</h2>
-      <form id="signupForm">
-        <label>Email</label>
-        <input type="email" id="signupEmail" required autocomplete="email"
-          placeholder="you@example.com">
-
-        <label>Password (minimum 8 characters)</label>
-        <input type="password" id="signupPassword" required minlength="8"
-          autocomplete="new-password" placeholder="Create password">
-
-        <button class="primary" type="submit">Sign Up</button>
-      </form>
-
-      <hr style="border-color:#292929;margin:25px 0">
-
-      <h2>Login</h2>
-      <form id="realLoginForm">
-        <label>Email</label>
-        <input type="email" id="loginEmail" required autocomplete="email"
-          placeholder="you@example.com">
-
-        <label>Password</label>
-        <input type="password" id="loginPassword" required
-          autocomplete="current-password" placeholder="Your password">
-
-        <button class="primary" type="submit">Login</button>
-      </form>
-    </div>
-
-    <div id="loggedInPanel" class="hidden">
-      <p>Logged in as:</p>
-      <p id="loggedInEmail"></p>
-      <button class="primary" id="logoutButton" type="button">Logout</button>
-    </div>
-
-    <p id="loginMessage" class="muted" aria-live="polite"></p>
-  </div>
-</section>
-
-</main>
-
-<footer>
-  <div class="logo">CHAD <span>ACADEMY</span></div>
-  <p>Rankings • Profiles • Community • Battles</p>
-  <p>Follow us on TikTok: <a href="https://www.tiktok.com/@chads_academy"
-  target="_blank" rel="noopener noreferrer">@chads_academy</a></p>
-  <p>Chad Academy is an independent community project.</p>
-</footer>
-
-<div id="toast" class="toast hidden"></div>
-
-<script>
-"use strict";
-
-const STORE_KEY = "chad_academy_demo_v1";
-const CATEGORIES = ["chads", "potential"];
-
-let currentCategory = "chads";
-let currentProfileId = null;
-let toastTimer;
-
-function uid(){
-  return "m_" + Date.now().toString(36) +
-    Math.random().toString(36).slice(2,8);
-}
-
-function escapeHTML(value=""){
-  return String(value).replace(/[&<>"']/g, ch => ({
-    "&":"&amp;","<":"&lt;",">":"&gt;",
-    '"':"&quot;","'":"&#39;"
-  })[ch]);
-}
-
-function safeURL(value){
-  try{
-    const u = new URL(value);
-    return ["https:","http:"].includes(u.protocol) ? u.href : "";
-  }catch{
-    return "";
-  }
-}
-
-function defaultMembers(){
-  return [];
-}
-
-function loadData(){
-  try{
-    const saved = localStorage.getItem(STORE_KEY);
-    if(saved){
-      const parsed = JSON.parse(saved);
-      if(Array.isArray(parsed.members) && Array.isArray(parsed.votes)){
-        return parsed;
-      }
-    }
-  }catch(e){}
-  return {members:defaultMembers(), votes:[], history:{}};
-}
-
-let db = loadData();
-
-function saveData(){
-  try{
-    localStorage.setItem(STORE_KEY, JSON.stringify(db));
-  }catch(e){
-    toast("Browser storage is full or unavailable.");
-  }
-}
-
-function sortedMembers(category){
-  return db.members
-    .filter(m => m.category === category && m.approved === true)
-    .sort((a,b) => b.score-a.score || a.createdAt-b.createdAt);
-}
-
-function showPage(page){
-  document.querySelectorAll(".page").forEach(p => p.classList.add("hidden"));
-  const target = document.getElementById(page);
-  if(target) target.classList.remove("hidden");
-
-  document.querySelectorAll("nav button").forEach(b=>{
-    b.classList.toggle("active", b.dataset.page===page);
-  });
-
-  if(page==="rankings") renderRankings();
-  if(page==="home") renderHome();
-  if(page==="battles") populateBattles();
-
-  window.scrollTo({top:0,behavior:"smooth"});
-}
-
-document.querySelectorAll("nav button").forEach(btn=>{
-  btn.addEventListener("click",()=>showPage(btn.dataset.page));
-});
-
-document.querySelectorAll("[data-category]").forEach(btn=>{
-  btn.addEventListener("click",()=>{
-    currentCategory=btn.dataset.category;
-    document.querySelectorAll("[data-category]").forEach(b=>
-      b.classList.toggle("active",b===btn)
-    );
-    renderRankings();
-  });
-});
-
-document.getElementById("search").addEventListener("input",renderRankings);
-
-function avatarHTML(m,css="avatar"){
-  const photo=safeURL(m.photo);
-  const fallback="https://placehold.co/120x120/171717/ffffff?text=CA";
-  return `<img class="${css}" src="${escapeHTML(photo||fallback)}"
-    alt="${escapeHTML(m.name)}"
-    onerror="this.onerror=null;this.src='${fallback}'">`;
-}
-
-function memberCard(m,rank){
-  const alreadyVoted=db.votes.includes(m.id);
-  return `
-  <article class="member" onclick="openProfile('${m.id}')">
-    <div class="rank">#${rank}</div>
-    ${avatarHTML(m)}
-    <div class="member-info">
-      <h3>${escapeHTML(m.name)}</h3>
-      <p>${escapeHTML(m.social)}</p>
-      <p>⭐ ${m.score} points</p>
-    </div>
-    <button class="vote" ${alreadyVoted?"disabled":""}
-      onclick="event.stopPropagation();vote('${m.id}')">
-      ${alreadyVoted?"Voted":"▲ Vote"}
-    </button>
-  </article>`;
-}
-
-function renderRankings(){
-  const list=document.getElementById("rankingList");
-  const query=document.getElementById("search").value.trim().toLowerCase();
-  const members=sortedMembers(currentCategory)
-    .filter(m=>(m.name+" "+m.social+" "+m.platform).toLowerCase().includes(query));
-
-  if(!members.length){
-    list.innerHTML='<div class="empty">No members listed yet. Be the first to apply!</div>';
-    return;
-  }
-
-  list.innerHTML=members.map(m=>
-    memberCard(m,sortedMembers(currentCategory).findIndex(x=>x.id===m.id)+1)
-  ).join("");
-}
-
-function renderHome(){
-  document.getElementById("totalMembers").textContent=
-    db.members.filter(m=>m.approved).length;
-
-  document.getElementById("totalVotes").textContent=
-    db.members.reduce((sum,m)=>sum+m.score,0);
-
-  const top=[...sortedMembers("chads"),...sortedMembers("potential")]
-    .sort((a,b)=>b.score-a.score).slice(0,6);
-
-  document.getElementById("homeTop").innerHTML=top.length
-    ?top.map(m=>memberCard(m,sortedMembers(m.category).findIndex(x=>x.id===m.id)+1)).join("")
-    :'<div class="empty">No listed members yet. Apply to be the first!</div>';
-}
-
-function openProfile(id){
-  const m=db.members.find(x=>x.id===id);
-  if(!m || !m.approved)return;
-
-  currentProfileId=id;
-  const rank=sortedMembers(m.category).findIndex(x=>x.id===id)+1;
-  const events=(db.history[id]||[]).slice().reverse();
-
-  const profileLink=safeURL(m.link);
-  const profileSocial=profileLink
-    ?`<a href="${escapeHTML(profileLink)}" target="_blank" rel="noopener noreferrer">Visit Social Profile ↗</a>`
-    :`<span class="muted">${escapeHTML(m.platform)}: ${escapeHTML(m.social)}</span>`;
-
-  document.getElementById("profileContent").innerHTML=`
-    <div class="panel profile-head">
-      ${avatarHTML(m,"profile-photo")}
-      <h1 class="profile-name">${escapeHTML(m.name)}</h1>
-      <p>${escapeHTML(m.social)} · ${escapeHTML(m.platform)}</p>
-      <span class="badge">${m.category==="chads"?"Chads Ranking":"HTN & Potential"}</span>
-      <div class="profile-stats">
-        <div><strong>#${rank>0?rank:"—"}</strong><small>Rank</small></div>
-        <div><strong>${m.score}</strong><small>Points</small></div>
-        <div><strong>${m.voteCount||0}</strong><small>Votes received</small></div>
-      </div>
-      <h3>About Me</h3>
-      <p style="line-height:1.7;overflow-wrap:anywhere">${escapeHTML(m.bio||"No bio added yet.")}</p>
-      <p>${profileSocial}</p>
-      <button class="vote" onclick="vote('${m.id}')"
-        ${db.votes.includes(m.id)?"disabled":""}>
-        ${db.votes.includes(m.id)?"Already Voted":"▲ Vote for "+escapeHTML(m.name)}
-      </button>
-    </div>
-    <div class="panel">
-      <h2>📜 Profile History</h2>
-      ${events.length?events.map(e=>`
-        <div class="history-item">
-          <strong>${escapeHTML(e.title)}</strong><br>
-          <span class="muted">${escapeHTML(e.detail)} · ${escapeHTML(e.date)}</span>
-        </div>`).join("")
-        :'<p class="muted">No activity history yet.</p>'}
-      <p class="notice">History begins when activity is recorded in this demo.</p>
-    </div>`;
-
-  showPage("profile");
-}
-
-function addHistory(id,title,detail){
-  if(!db.history[id])db.history[id]=[];
-  db.history[id].push({
-    title,detail,date:new Date().toLocaleString()
-  });
-}
-
-function vote(id){
-  const m=db.members.find(x=>x.id===id && x.approved);
-  if(!m)return toast("Member not found.");
-  if(db.votes.includes(id))return toast("You already voted for this member in this browser.");
-
-  db.votes.push(id);
-  m.score++;
-  m.voteCount=(m.voteCount||0)+1;
-  addHistory(id,"Received a vote","+1 point");
-  saveData();
-
-  toast("Vote recorded in this browser!");
-  renderHome();
-  renderRankings();
-
-  if(currentProfileId===id)openProfile(id);
-}
-
-document.getElementById("joinForm").addEventListener("submit",e=>{
-  e.preventDefault();
-
-  const category=document.getElementById("joinCategory").value;
-  const name=document.getElementById("joinName").value.trim();
-  const photo=safeURL(document.getElementById("joinPhoto").value.trim());
-  const social=document.getElementById("joinSocial").value.trim();
-  const platform=document.getElementById("joinPlatform").value;
-  const link=safeURL(document.getElementById("joinLink").value.trim());
-  const bio=document.getElementById("joinBio").value.trim();
-
-  if(!name||!photo||!social||!platform||!bio){
-    return toast("Please fill in all required fields.");
-  }
-
-  if(sortedMembers(category).length>=1000){
-    return toast("This category has reached its 1,000-member limit.");
-  }
-
-  const m={
-    id:uid(),name,photo,social,platform,link,bio,category,
-    score:0,voteCount:0,createdAt:Date.now(),
-    approved:false
-  };
-
-  db.members.push(m);
-  addHistory(m.id,"Application submitted","Waiting for approval");
-  saveData();
-
-  e.target.reset();
-  toast("Application saved in this browser. Admin approval is not connected yet.");
-  showPage("home");
-});
-
-function populateBattles(){
-  const members=db.members.filter(m=>m.approved);
-  ["battleA","battleB"].forEach(id=>{
-    const sel=document.getElementById(id);
-    const old=sel.value;
-    sel.innerHTML=members.map(m=>
-      `<option value="${m.id}">${escapeHTML(m.name)}</option>`
-    ).join("");
-    if(members.some(m=>m.id===old))sel.value=old;
-  });
-}
-
-function startBattle(){
-  const a=db.members.find(m=>m.id===document.getElementById("battleA").value&&m.approved);
-  const b=db.members.find(m=>m.id===document.getElementById("battleB").value&&m.approved);
-  const result=document.getElementById("battleResult");
-
-  if(!a||!b)return toast("You need listed members to start a battle.");
-  if(a.id===b.id)return toast("Choose two different members.");
-
-  result.innerHTML=`
-    <div class="panel battle">
-      <div>
-        ${avatarHTML(a,"")}
-        <h3>${escapeHTML(a.name)}</h3>
-        <p>${a.score} points</p>
-        <button class="primary" onclick="openProfile('${a.id}')">View Profile</button>
-      </div>
-      <strong style="color:var(--red);font-size:25px">VS</strong>
-      <div>
-        ${avatarHTML(b,"")}
-        <h3>${escapeHTML(b.name)}</h3>
-        <p>${b.score} points</p>
-        <button class="primary" onclick="openProfile('${b.id}')">View Profile</button>
-      </div>
-    </div>`;
-}
-
-function demoLogin(){
-  document.getElementById("loginMessage").textContent=
-    "Demo only: real login is not enabled. Do not enter real credentials.";
-}
-
-function toast(message){
-  const el=document.getElementById("toast");
-  el.textContent=message;
-  el.classList.remove("hidden");
-  clearTimeout(toastTimer);
-  toastTimer=setTimeout(()=>el.classList.add("hidden"),3500);
-}
-
-renderHome();
-renderRankings();
-populateBattles();
-</script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-<script>
-const SUPABASE_URL = "https://grhmquilbkihjumxnquw.supabase.co";
-const SUPABASE_KEY = "sb_publishable_HQI0btnccFyhQ9f7dNhCPQ_osuYPSC6";
-
-const supabaseClient = window.supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_KEY
-);
-
-console.log("Chad Academy Supabase connection ready!");
-
-async function testConnection() {
-  const { data, error } = await supabaseClient
-    .from("members")
-    .select("*")
-    .limit(1);
-
-  if (error) {
-    console.error("Database error:", error.message);
-    alert("Database connection error: " + error.message);
-    return;
-  }
-
-  console.log("Database connected successfully!");
-  alert("Chad Academy database connected!");
-}
-testConnection();
-  const authStatus = document.getElementById("authStatus");
-const authForms = document.getElementById("authForms");
-const loggedInPanel = document.getElementById("loggedInPanel");
-const loginMessage = document.getElementById("loginMessage");
-
-function showAuthMessage(message) {
-  loginMessage.textContent = message;
-}
-
-function updateAuthUI(user) {
-  const loggedIn = Boolean(user);
-
-  authStatus.textContent = loggedIn
-    ? "You are logged in."
-    : "Create an account or log in.";
-
-  authForms.classList.toggle("hidden", loggedIn);
-  loggedInPanel.classList.toggle("hidden", !loggedIn);
-
-  document.getElementById("loggedInEmail").textContent =
-    user?.email || "";
-}
-
-document.getElementById("signupForm").addEventListener("submit", async (e) => {
-  e.preventDefault();
-
-  const email = document.getElementById("signupEmail").value.trim();
-  const password = document.getElementById("signupPassword").value;
-
-  showAuthMessage("Creating account...");
-
-  const { data, error } = await supabaseClient.auth.signUp({
-    email,
-    password,
-    options: {
-      emailRedirectTo: "https://jhonnyayush-max.github.io/Chads-academy/"
-    }
-  });
-
-  if (error) {
-    showAuthMessage(error.message);
-    return;
-  }
-
-  if (data.session) {
-    updateAuthUI(data.user);
-    showAuthMessage("Account created successfully!");
-  } else {
-    showAuthMessage("Account created! Check your email for confirmation.");
-  }
-});
-
-document.getElementById("realLoginForm").addEventListener("submit", async (e) => {
-  e.preventDefault();
-
-  const email = document.getElementById("loginEmail").value.trim();
-  const password = document.getElementById("loginPassword").value;
-
-  showAuthMessage("Logging in...");
-
-  const { data, error } = await supabaseClient.auth.signInWithPassword({
-    email,
-    password
-  });
-
-  if (error) {
-    showAuthMessage(error.message);
-    return;
-  }
-
-  updateAuthUI(data.user);
-  showAuthMessage("Login successful!");
-});
-
-document.getElementById("logoutButton").addEventListener("click", async () => {
-  const { error } = await supabaseClient.auth.signOut({ scope: "local" });
-
-  if (error) {
-    showAuthMessage(error.message);
-    return;
-  }
-
-  updateAuthUI(null);
-  showAuthMessage("Logged out successfully.");
-});
-
-supabaseClient.auth.getSession().then(({ data, error }) => {
-  if (error) {
-    showAuthMessage(error.message);
-    return;
-  }
-
-  updateAuthUI(data.session?.user ?? null);
-});
-
-supabaseClient.auth.onAuthStateChange((_event, session) => {
-  updateAuthUI(session?.user ?? null);
-});
-</script>
-</body>
-</html>
+<!DOCTYPE html>  <html lang="en">  
+<head>  
+<meta charset="UTF-8">  
+<meta name="viewport" content="width=device-width, initial-scale=1">  
+<title>Chad Academy</title>  
+<style>  
+:root{--bg:#09090d;--panel:#15151d;--panel2:#1e1e29;--red:#ff303d;--text:#f7f7fb;--muted:#aaaab8;--line:#30303c;--green:#35d07f}  
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at top,#281016 0,#09090d 42%);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}button,input,select,textarea{font:inherit}button{cursor:pointer}.wrap{max-width:1100px;margin:auto;padding:16px}.top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:14px 0 20px}.brand{font-weight:950;font-size:23px;letter-spacing:.4px}.brand span{color:var(--red)}nav{display:flex;gap:7px;flex-wrap:wrap}nav button,.secondary{background:var(--panel2);border:1px solid var(--line);color:var(--text);padding:9px 12px;border-radius:10px}.primary{background:var(--red);border:0;color:white;padding:11px 15px;border-radius:10px;font-weight:800}.hidden{display:none!important}.hero,.panel,.card{background:linear-gradient(145deg,#191920,#111117);border:1px solid var(--line);border-radius:17px;padding:20px;margin-bottom:14px}.hero{padding:30px 22px}.hero h1{font-size:clamp(30px,6vw,52px);line-height:1.05;margin:0 0 12px}.hero h1 span{color:var(--red)}p{line-height:1.55}.muted,.notice{color:var(--muted);font-size:14px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}.field{margin:12px 0}label{display:block;font-weight:700;margin-bottom:6px;font-size:14px}input,select,textarea{width:100%;background:#0c0c12;border:1px solid #393945;color:var(--text);padding:11px;border-radius:9px}textarea{resize:vertical}.page-title{margin:12px 0 16px}.member{display:flex;gap:13px;align-items:flex-start}.avatar{width:72px;height:72px;object-fit:cover;border-radius:13px;background:#292934;border:1px solid var(--line);flex-shrink:0}.member h3{margin:0 0 5px}.tag{display:inline-block;background:#302027;color:#ff9ca3;padding:4px 8px;border-radius:7px;font-size:12px;margin:3px 3px 3px 0}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.status{padding:10px 12px;border-radius:9px;background:#24242e;margin:10px 0}.status.ok{color:var(--green)}.status.err{color:#ff7b85}.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}hr{border:0;border-top:1px solid var(--line);margin:20px 0}.empty{padding:24px;text-align:center;color:var(--muted)}footer{text-align:center;color:var(--muted);padding:24px 0;font-size:13px}.small{font-size:12px;color:var(--muted)}.rank{font-size:23px;font-weight:900;color:var(--red);min-width:35px}.split{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}  
+</style>  
+</head>  
+<body>  
+<div class="wrap">  
+<header class="top">  
+  <div class="brand">CHAD <span>ACADEMY</span></div>  
+  <nav aria-label="Main navigation">  
+    <button data-page="home">Home</button><button data-page="rankings">Rankings</button><button data-page="battles">Battles</button><button data-page="join">Apply</button><button data-page="account">Account</button><button data-page="admin" id="adminNav" class="hidden">Admin</button>  
+  </nav>  
+</header>  
+<main>  
+<section id="home" class="page">  
+  <div class="hero">  
+    <span class="tag">COMMUNITY RANKING PLATFORM</span>  
+    <h1>WELCOME TO<br><span>CHAD ACADEMY</span></h1>  
+    <p class="muted">Discover profiles, vote for approved members, and apply to join the rankings.</p>  
+    <div class="actions"><button class="primary" data-page="rankings">Explore Rankings</button><button class="secondary" data-page="join">Apply for Ranking</button></div>  
+  </div>  
+  <div class="grid">  
+    <div class="panel"><h2 id="memberTotal">—</h2><p class="muted">Approved profiles</p></div>  
+    <div class="panel"><h2 id="voteTotal">—</h2><p class="muted">Community votes</p></div>  
+    <div class="panel"><h2 id="applicationTotal">—</h2><p class="muted">Pending applications (admin)</p></div>  
+  </div>  
+  <h2>Top Ranked</h2><div id="homeTop" class="grid"><div class="empty">Loading rankings…</div></div>  
+</section>  <section id="rankings" class="page hidden">  
+  <h1 class="page-title">🏆 Rankings</h1>  
+  <div class="panel">  
+    <div class="tabs"><button class="secondary categoryBtn" data-category="chads">Chads Ranking</button><button class="secondary categoryBtn" data-category="potential">HTN &amp; Potential</button></div>  
+    <p class="muted">Rankings are sorted by votes. Only approved profiles are public.</p>  
+  </div>  
+  <div id="rankList" class="grid"><div class="empty">Loading…</div></div>  
+</section>  <section id="battles" class="page hidden">  
+  <h1 class="page-title">⚔️ Battles</h1>  
+  <div class="panel"><p class="muted">Pick two approved profiles and compare their community vote totals.</p>  
+    <div class="grid"><div class="field"><label for="battleA">First profile</label><select id="battleA"></select></div><div class="field"><label for="battleB">Second profile</label><select id="battleB"></select></div></div>  
+    <button class="primary" id="compareBtn">Compare profiles</button><div id="battleResult" class="status hidden"></div>  
+  </div>  
+</section>  <section id="join" class="page hidden">  
+  <h1 class="page-title">📩 Apply for Ranking</h1>  
+  <div class="panel">  
+    <p class="muted">Log in first. Submit one genuine profile application; it will stay pending until an administrator reviews it.</p>  
+    <form id="joinForm">  
+      <div class="field"><label for="joinName">Display name *</label><input id="joinName" maxlength="45" required placeholder="Your display name"></div>  
+      <div class="field"><label for="joinPhoto">Profile photo URL *</label><input id="joinPhoto" type="url" required placeholder="https://example.com/photo.jpg"></div>  
+      <div class="field"><label for="joinSocial">Social media username *</label><input id="joinSocial" maxlength="80" required placeholder="@yourusername"></div>  
+      <div class="field"><label for="joinPlatform">Social media platform *</label><select id="joinPlatform" required><option value="">Select platform</option><option>TikTok</option><option>Instagram</option><option>YouTube</option><option>X</option><option>Facebook</option><option>Other</option></select></div>  
+      <div class="field"><label for="joinLink">Social profile link (optional)</label><input id="joinLink" type="url" placeholder="https://..."></div>  
+      <div class="field"><label for="joinCategory">Category *</label><select id="joinCategory" required><option value="chads">Chads Ranking</option><option value="potential">HTN &amp; Potential</option></select></div>  
+      <div class="field"><label for="joinBio">Your bio *</label><textarea id="joinBio" maxlength="500" rows="4" required placeholder="Tell people about yourself…"></textarea></div>  
+      <button class="primary" type="submit">Submit Application</button>  
+    </form>  
+    <div id="joinMessage" class="status hidden" aria-live="polite"></div>  
+  </div>  
+</section>  <section id="account" class="page hidden">  
+  <h1 class="page-title">🔐 Chad Academy Account</h1>  
+  <div class="panel">  
+    <p id="authStatus" class="muted">Checking account status…</p>  
+    <div id="authForms">  
+      <div class="grid">  
+        <div><h2>Create account</h2><form id="signupForm"><div class="field"><label for="signupEmail">Email</label><input type="email" id="signupEmail" required autocomplete="email" placeholder="you@example.com"></div><div class="field"><label for="signupPassword">Password (minimum 8 characters)</label><input type="password" id="signupPassword" required minlength="8" autocomplete="new-password" placeholder="Create password"></div><button class="primary" type="submit">Sign Up</button></form></div>  
+        <div><h2>Login</h2><form id="realLoginForm"><div class="field"><label for="loginEmail">Email</label><input type="email" id="loginEmail" required autocomplete="email" placeholder="you@example.com"></div><div class="field"><label for="loginPassword">Password</label><input type="password" id="loginPassword" required autocomplete="current-password" placeholder="Your password"></div><button class="primary" type="submit">Login</button></form></div>  
+      </div>  
+    </div>  
+    <div id="loggedInPanel" class="hidden"><p>Logged in as:</p><p id="loggedInEmail"></p><p id="roleLabel" class="muted"></p><button class="primary" id="logoutButton" type="button">Logout</button></div>  
+    <p id="loginMessage" class="status hidden" aria-live="polite"></p>  
+  </div>  
+</section>  <section id="admin" class="page hidden">  
+  <h1 class="page-title">🛡️ Admin Panel</h1>  
+  <div class="panel"><p class="muted">Review pending applications. Approving makes the profile public; rejecting leaves it out of rankings.</p><button class="secondary" id="refreshAdmin">Refresh applications</button></div>  
+  <div id="adminList" class="grid"><div class="empty">Loading…</div></div>  
+</section>  
+</main>  
+<footer>Chad Academy · Community profiles and rankings</footer>  
+</div>  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>  <script>  
+/*  
+  Chad Academy — Supabase-connected single-page site.  
+  Uses the existing tables: members, votes, user_profiles, member_history.  
+  Database column names assumed here are snake_case. If your existing schema uses  
+  different column names, the relevant queries will need matching changes.  
+*/  
+const SUPABASE_URL = "https://grhmquilbkihjumxnquw.supabase.co";  
+const SUPABASE_KEY = "sb_publishable_HQI0btnccFyhQ9f7dNhCPQ_osuYPSC6";  
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);  
+  
+let currentUser = null;  
+let currentRole = "user";  
+let currentCategory = "chads";  
+let members = [];  
+let votedIds = new Set();  
+  
+const $ = id => document.getElementById(id);  
+const escapeHTML = value => String(value ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));  
+function showMessage(id, message, isError=false) {  
+  const el = $(id); el.textContent = message; el.classList.remove("hidden","err","ok");  
+  el.classList.add(isError ? "err" : "ok");  
+}  
+function hideMessage(id){$(id).classList.add("hidden");}  
+function safeHttpUrl(value) {  
+  if (!value) return "";  
+  try { const u = new URL(value); return ["https:","http:"].includes(u.protocol) ? u.href : ""; } catch { return ""; }  
+}  
+function showPage(id) {  
+  document.querySelectorAll(".page").forEach(p => p.classList.toggle("hidden", p.id !== id));  
+  window.scrollTo({top:0,behavior:"smooth"});  
+  if (id === "rankings") renderRankings();  
+  if (id === "battles") fillBattleSelects();  
+  if (id === "admin") loadAdmin();  
+}  
+document.querySelectorAll("[data-page]").forEach(btn => btn.addEventListener("click", () => showPage(btn.dataset.page)));  
+document.querySelectorAll(".categoryBtn").forEach(btn => btn.addEventListener("click", () => {  
+  currentCategory = btn.dataset.category; renderRankings();  
+}));  
+function memberScore(m){return Number(m.vote_count ?? m.voteCount ?? m.score ?? 0)}  
+function memberName(m){return m.display_name ?? m.name ?? "Unnamed member"}  
+function memberPhoto(m){return safeHttpUrl(m.photo_url ?? m.photo ?? "")}  
+function memberCategory(m){return m.category ?? "chads"}  
+function isApproved(m){return m.approved === true || m.status === "approved"}  
+function publicMembers(){return members.filter(isApproved)}  
+function sortedMembers(category){return publicMembers().filter(m=>memberCategory(m)===category).sort((a,b)=>memberScore(b)-memberScore(a))}  
+function memberCard(m, rank=null) {  
+  const photo = memberPhoto(m);  
+  const social = escapeHTML(m.social_username ?? m.social ?? "");  
+  const platform = escapeHTML(m.platform ?? "");  
+  const link = safeHttpUrl(m.social_link ?? m.link ?? "");  
+  const bio = escapeHTML(m.bio ?? "");  
+  const voteButton = currentUser ? `<button class="primary voteBtn" data-id="${escapeHTML(m.id)}">▲ Vote (${memberScore(m)})</button>` : `<button class="secondary" data-page="account">Login to vote</button>`;  
+  return `<article class="card"><div class="member">${rank!==null?`<div class="rank">#${rank}</div>`:""}<img class="avatar" src="${escapeHTML(photo)}" alt="" onerror="this.style.visibility='hidden'"><div style="min-width:0"><h3>${escapeHTML(memberName(m))}</h3><span class="tag">${escapeHTML(memberCategory(m)==="potential"?"HTN & Potential":"Chads Ranking")}</span><span class="tag">${platform}</span><p class="muted">${social}</p><p>${bio}</p><p class="small">${memberScore(m)} vote(s)</p><div class="actions">${voteButton}${link?`<a class="secondary" href="${escapeHTML(link)}" target="_blank" rel="noopener noreferrer">Social profile ↗</a>`:""}</div></div></div></article>`;  
+}  
+function attachVoteButtons(){  
+  document.querySelectorAll(".voteBtn").forEach(btn=>btn.addEventListener("click",()=>castVote(btn.dataset.id)));  
+  document.querySelectorAll("[data-page='account']").forEach(btn=>btn.addEventListener("click",()=>showPage("account")));  
+}  
+async function loadMembers() {  
+  const {data,error} = await sb.from("members").select("*");  
+  if(error){console.error("Loading members:",error); return showLoadError(error);}  
+  members = data || [];  
+  renderAll();  
+}  
+function showLoadError(error){  
+  const msg = `Could not load profiles: ${error.message}. Check the members table columns and Supabase SELECT permissions.`;  
+  $("rankList").innerHTML = `<div class="panel">${escapeHTML(msg)}</div>`;  
+  $("homeTop").innerHTML = `<div class="panel">${escapeHTML(msg)}</div>`;  
+}  
+function renderRankings(){  
+  const list=sortedMembers(currentCategory);  
+  $("rankList").innerHTML=list.length?list.map((m,i)=>memberCard(m,i+1)).join(""):`<div class="panel empty">No approved profiles in this category yet.</div>`;  
+  attachVoteButtons();  
+}  
+function renderAll(){  
+  $("memberTotal").textContent=publicMembers().length;  
+  $("voteTotal").textContent=publicMembers().reduce((n,m)=>n+memberScore(m),0);  
+  $("homeTop").innerHTML=sortedMembers("chads").slice(0,3).map((m,i)=>memberCard(m,i+1)).join("")||`<div class="panel empty">No approved profiles yet. Be the first to apply.</div>`;  
+  renderRankings(); fillBattleSelects();  
+}  
+async function loadVoteHistory(){  
+  if(!currentUser)return;  
+  const {data,error}=await sb.from("votes").select("*").eq("user_id",currentUser.id);  
+  if(!error) votedIds=new Set((data||[]).map(v=>String(v.member_id)));  
+}  
+async function castVote(memberId){  
+  if(!currentUser){showPage("account");return;}  
+  if(votedIds.has(String(memberId)))return alert("You have already voted for this profile.");  
+  const {error}=await sb.from("votes").insert({user_id:currentUser.id,member_id:memberId});  
+  if(error){  
+    if(error.code==="23505") {votedIds.add(String(memberId)); return alert("You have already voted for this profile.");}  
+    return alert("Vote failed: "+error.message);  
+  }  
+  votedIds.add(String(memberId));  
+  await loadMembers();  
+}  
+function fillBattleSelects(){  
+  const list=publicMembers();  
+  ["battleA","battleB"].forEach(id=>{  
+    const old=$(id).value;  
+    $(id).innerHTML=list.map(m=>`<option value="${escapeHTML(m.id)}">${escapeHTML(memberName(m))}</option>`).join("");  
+    if(old && list.some(m=>String(m.id)===old))$(id).value=old;  
+  });  
+}  
+$("compareBtn").addEventListener("click",()=>{  
+  const a=publicMembers().find(m=>String(m.id)===$("battleA").value);  
+  const b=publicMembers().find(m=>String(m.id)===$("battleB").value);  
+  const result=$("battleResult"); result.classList.remove("hidden","err");  
+  if(!a||!b||String(a.id)===String(b.id)){result.textContent="Choose two different approved profiles.";return;}  
+  const av=memberScore(a),bv=memberScore(b);  
+  result.textContent=av===bv?`It's a tie! ${memberName(a)}: ${av} · ${memberName(b)}: ${bv}`:`${memberName(av>bv?a:b)} is ahead! ${memberName(a)}: ${av} · ${memberName(b)}: ${bv}`;  
+});  
+$("joinForm").addEventListener("submit",async e=>{  
+  e.preventDefault();  
+  if(!currentUser){showMessage("joinMessage","Please create an account or log in before applying.",true);return showPage("account");}  
+  const name=$("joinName").value.trim(), photo=safeHttpUrl($("joinPhoto").value.trim());  
+  const social=$("joinSocial").value.trim(), platform=$("joinPlatform").value;  
+  const link=safeHttpUrl($("joinLink").value.trim()), category=$("joinCategory").value, bio=$("joinBio").value.trim();  
+  if(!name||!photo||!social||!platform||!bio)return showMessage("joinMessage","Please complete all required fields.",true);  
+  const payload={user_id:currentUser.id,display_name:name,photo_url:photo,social_username:social,platform,social_link:link||null,category,bio,score:0,vote_count:0,approved:false,status:"pending"};  
+  const {error}=await sb.from("members").insert(payload);  
+  if(error){showMessage("joinMessage","Application could not be submitted: "+error.message,true);return;}  
+  e.target.reset();showMessage("joinMessage","Application submitted! It will appear publicly after admin approval.");await loadMembers();  
+});  
+async function refreshRole(user){  
+  currentRole="user";  
+  if(!user)return;  
+  const {data,error}=await sb.from("user_profiles").select("*").eq("id",user.id).maybeSingle();  
+  if(!error&&data)currentRole=data.role||"user";  
+  $("adminNav").classList.toggle("hidden",currentRole!=="admin");  
+  $("roleLabel").textContent=currentRole==="admin"?"Administrator access enabled.":"Member account";  
+}  
+function updateAuthUI(user){  
+  currentUser=user||null;  
+  $("authStatus").textContent=user?"You are logged in.":"Create an account or log in.";  
+  $("authForms").classList.toggle("hidden",!!user);  
+  $("loggedInPanel").classList.toggle("hidden",!user);  
+  $("loggedInEmail").textContent=user?.email||"";  
+  if(!user){currentRole="user";$("adminNav").classList.add("hidden");votedIds.clear();}  
+}  
+$("signupForm").addEventListener("submit",async e=>{  
+  e.preventDefault();showMessage("loginMessage","Creating account…");  
+  const email=$("signupEmail").value.trim(),password=$("signupPassword").value;  
+  const {data,error}=await sb.auth.signUp({email,password,options:{emailRedirectTo:"https://jhonnyayush-max.github.io/Chads-academy/"}});  
+  if(error)return showMessage("loginMessage",error.message,true);  
+  if(data.session){updateAuthUI(data.user);await refreshRole(data.user);await loadVoteHistory();showMessage("loginMessage","Account created successfully.");}  
+  else showMessage("loginMessage","Account created. Check your email for confirmation, then log in.");  
+});  
+$("realLoginForm").addEventListener("submit",async e=>{  
+  e.preventDefault();showMessage("loginMessage","Logging in…");  
+  const {data,error}=await sb.auth.signInWithPassword({email:$("loginEmail").value.trim(),password:$("loginPassword").value});  
+  if(error)return showMessage("loginMessage",error.message,true);  
+  updateAuthUI(data.user);await refreshRole(data.user);await loadVoteHistory();showMessage("loginMessage","Login successful.");  
+});  
+$("logoutButton").addEventListener("click",async()=>{  
+  const {error}=await sb.auth.signOut();  
+  if(error)return showMessage("loginMessage",error.message,true);  
+  updateAuthUI(null);showMessage("loginMessage","Logged out successfully.");  
+});  
+async function loadAdmin(){  
+  if(!currentUser||currentRole!=="admin"){$("adminList").innerHTML='<div class="panel">Admin access required.</div>';return;}  
+  const {data,error}=await sb.from("members").select("*").or("approved.eq.false,status.eq.pending").order("created_at",{ascending:false});  
+  if(error){$("adminList").innerHTML=`<div class="panel">Could not load applications: ${escapeHTML(error.message)}</div>`;return;}  
+  $("applicationTotal").textContent=(data||[]).length;  
+  $("adminList").innerHTML=(data||[]).length?(data||[]).map(m=>`<article class="card"><div class="member"><img class="avatar" src="${escapeHTML(memberPhoto(m))}" alt="" onerror="this.style.visibility='hidden'"><div><h3>${escapeHTML(memberName(m))}</h3><p class="muted">${escapeHTML(m.social_username??m.social??"")} · ${escapeHTML(m.platform??"")}</p><p>${escapeHTML(m.bio??"")}</p><p class="small">Category: ${escapeHTML(memberCategory(m))}</p><div class="actions"><button class="primary" data-approve="${escapeHTML(m.id)}">Approve</button><button class="secondary" data-reject="${escapeHTML(m.id)}">Reject</button></div></div></div></article>`).join(""):'<div class="panel empty">No pending applications.</div>';  
+  document.querySelectorAll("[data-approve]").forEach(b=>b.addEventListener("click",()=>moderateMember(b.dataset.approve,true)));  
+  document.querySelectorAll("[data-reject]").forEach(b=>b.addEventListener("click",()=>moderateMember(b.dataset.reject,false)));  
+}  
+async function moderateMember(id,approve){  
+  if(currentRole!=="admin")return alert("Admin access required.");  
+  const update=approve?{approved:true,status:"approved"}:{approved:false,status:"rejected"};  
+  const {error}=await sb.from("members").update(update).eq("id",id);  
+  if(error)return alert("Could not update application: "+error.message);  
+  await loadAdmin();await loadMembers();  
+}  
+$("refreshAdmin").addEventListener("click",loadAdmin);  
+document.querySelectorAll("[data-page]").forEach(btn=>btn.addEventListener("click",()=>{if(btn.dataset.page==="admin")loadAdmin();}));  
+  
+sb.auth.onAuthStateChange(async(_event,session)=>{  
+  updateAuthUI(session?.user||null);  
+  if(session?.user){  
+    await refreshRole(session.user);  
+    await loadVoteHistory();  
+  }  
+});  
+(async()=>{  
+  const {data,error}=await sb.auth.getSession();  
+  if(error)showMessage("loginMessage",error.message,true);  
+  updateAuthUI(data?.session?.user||null);  
+  if(data?.session?.user){await refreshRole(data.session.user);await loadVoteHistory();}  
+  await loadMembers();  
+  // Pending count is visible to admins only.  
+  if(currentRole==="admin")await loadAdmin();  
+})();  
+</script>  </body>  
+</html>  
