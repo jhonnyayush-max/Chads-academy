@@ -164,21 +164,45 @@ function renderAll(){
   $("homeTop").innerHTML=sortedMembers("chads").slice(0,3).map((m,i)=>memberCard(m,i+1)).join("")||`<div class="panel empty">No approved profiles yet. Be the first to apply.</div>`;  
   renderRankings(); fillBattleSelects();  
 }  
-async function loadVoteHistory(){  
-  if(!currentUser)return;  
-  const {data,error}=await sb.from("votes").select("*").eq("user_id",currentUser.id);  
-  if(!error) votedIds=new Set((data||[]).map(v=>String(v.member_id)));  
-}  
-async function castVote(memberId){  
-  if(!currentUser){showPage("account");return;}  
-  if(votedIds.has(String(memberId)))return alert("You have already voted for this profile.");  
-  const {error}=await sb.from("votes").insert({user_id:currentUser.id,member_id:memberId});  
-  if(error){  
-    if(error.code==="23505") {votedIds.add(String(memberId)); return alert("You have already voted for this profile.");}  
-    return alert("Vote failed: "+error.message);  
-  }  
-  votedIds.add(String(memberId));  
-  await loadMembers();  
+async function loadVoteHistory(){
+if(!currentUser)return;
+
+const {data,error}=await sb
+.from("votes")
+.select("*")
+.eq("voter_id",currentUser.id);
+
+if(!error) {
+votedIds=new Set((data||[]).map(v=>String(v.member_id)));
+}
+}
+
+async function castVote(memberId){
+if(!currentUser){
+showPage("account");
+return;
+}
+
+if(votedIds.has(String(memberId))){
+return alert("You have already voted for this profile.");
+}
+
+const {error}=await sb.from("votes").insert({
+voter_id:currentUser.id,
+member_id:memberId
+});
+
+if(error){
+if(error.code==="23505"){
+votedIds.add(String(memberId));
+return alert("You have already voted for this profile.");
+}
+return alert("Vote failed: "+error.message);
+}
+
+votedIds.add(String(memberId));
+await loadMembers();
+}
 }  
 function fillBattleSelects(){  
   const list=publicMembers();  
