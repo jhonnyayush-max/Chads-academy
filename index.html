@@ -199,15 +199,77 @@ $("compareBtn").addEventListener("click",()=>{
 $("joinForm").addEventListener("submit",async e=>{  
   e.preventDefault();  
   if(!currentUser){showMessage("joinMessage","Please create an account or log in before applying.",true);return showPage("account");}  
-  const name=$("joinName").value.trim(), photo=safeHttpUrl($("joinPhoto").value.trim());  
-  const social=$("joinSocial").value.trim(), platform=$("joinPlatform").value;  
-  const link=safeHttpUrl($("joinLink").value.trim()), category=$("joinCategory").value, bio=$("joinBio").value.trim();  
-  if(!name||!photo||!social||!platform||!bio)return showMessage("joinMessage","Please complete all required fields.",true);  
-  const payload={user_id:currentUser.id,display_name:name,photo_url:photo,social_username:social,platform,social_link:link||null,category,bio,score:0,vote_count:0,approved:false,status:"pending"};  
-  const {error}=await sb.from("members").insert(payload);  
-  if(error){showMessage("joinMessage","Application could not be submitted: "+error.message,true);return;}  
-  e.target.reset();showMessage("joinMessage","Application submitted! It will appear publicly after admin approval.");await loadMembers();  
-});  
+    const name = $("joinName").value.trim();
+  const photoFile = $("joinPhoto").files[0];
+  const social = $("joinSocial").value.trim();
+  const platform = $("joinPlatform").value;
+  const link = safeHttpUrl($("joinLink").value.trim());
+  const category = $("joinCategory").value;
+  const bio = $("joinBio").value.trim();
+
+  if (!name || !photoFile || !social || !platform || !bio) {
+    return showMessage("joinMessage", "Please complete all required fields.", true);
+  }
+
+  if (!photoFile.type.startsWith("image/")) {
+    return showMessage("joinMessage", "Please select an image file.", true);
+  }
+
+  if (photoFile.size > 5 * 1024 * 1024) {
+    return showMessage("joinMessage", "Photo must be smaller than 5 MB.", true);
+  }
+
+  const safeFileName = photoFile.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+  const filePath = `${currentUser.id}/${Date.now()}-${safeFileName}`;
+
+  const { data: uploadData, error: uploadError } = await sb.storage
+    .from("member-photos")
+    .upload(filePath, photoFile, {
+      contentType: photoFile.type,
+      upsert: false
+    });
+
+  if (uploadError) {
+    showMessage("joinMessage", "Photo upload failed: " + uploadError.message, true);
+    return;
+  }
+
+  const { data: publicData } = sb.storage
+    .from("member-photos")
+    .getPublicUrl(uploadData.path);
+
+  const photo = safeHttpUrl(publicData.publicUrl);
+
+  if (!photo) {
+    return showMessage("joinMessage", "Could not get the photo URL.", true);
+  }
+
+  const payload = {
+    user_id: currentUser.id,
+    display_name: name,
+    photo_url: photo,
+    social_username: social,
+    platform,
+    social_link: link || null,
+    category,
+    bio,
+    score: 0,
+    vote_count: 0,
+    approved: false,
+    status: "pending"
+  };
+
+  const { error } = await sb.from("members").insert(payload);
+
+  if (error) {
+    showMessage("joinMessage", "Application could not be submitted: " + error.message, true);
+    return;
+  }
+
+  e.target.reset();
+  showMessage("joinMessage", "Application submitted! It will appear publicly after admin approval.");
+  await loadMembers();
+});
 async function refreshRole(user){  
   currentRole="user";  
   if(!user)return;  
