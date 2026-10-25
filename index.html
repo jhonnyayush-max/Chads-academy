@@ -239,9 +239,7 @@ if (!name || !photoFile || !social || !platform || !bio) {
     (!social ? "Social Username " : "") +
     (!platform ? "Platform " : "") +
     (!bio ? "Bio " : ""), true);
-  } {
-    return showMessage("joinMessage", "Please complete all required fields.", true);
-  }
+
 
   if (!photoFile.type.startsWith("image/")) {
     return showMessage("joinMessage", "Please select an image file.", true);
