@@ -314,17 +314,48 @@ a{color:#ff6c74;text-decoration:none;overflow-wrap:anywhere}
 
 <!-- LOGIN -->
 <section id="account" class="page hidden">
-  <h1>🔐 Member Login</h1>
+  <h1>🔐 Chad Academy Account</h1>
+
   <div class="panel">
-    <p>This is a frontend demo. Real account authentication is not enabled yet.</p>
-    <label>Email</label>
-    <input type="email" id="loginEmail" placeholder="you@example.com">
-    <label>Password</label>
-    <input type="password" id="loginPassword" placeholder="Password">
-    <button class="primary" onclick="demoLogin()">Demo Login</button>
-    <p id="loginMessage" class="muted"></p>
-    <p class="notice">Do not enter a real password here. Connect a secure
-    authentication provider before accepting real accounts.</p>
+    <p id="authStatus" class="muted">Checking account status...</p>
+
+    <div id="authForms">
+      <h2>Create Account</h2>
+      <form id="signupForm">
+        <label>Email</label>
+        <input type="email" id="signupEmail" required autocomplete="email"
+          placeholder="you@example.com">
+
+        <label>Password (minimum 8 characters)</label>
+        <input type="password" id="signupPassword" required minlength="8"
+          autocomplete="new-password" placeholder="Create password">
+
+        <button class="primary" type="submit">Sign Up</button>
+      </form>
+
+      <hr style="border-color:#292929;margin:25px 0">
+
+      <h2>Login</h2>
+      <form id="realLoginForm">
+        <label>Email</label>
+        <input type="email" id="loginEmail" required autocomplete="email"
+          placeholder="you@example.com">
+
+        <label>Password</label>
+        <input type="password" id="loginPassword" required
+          autocomplete="current-password" placeholder="Your password">
+
+        <button class="primary" type="submit">Login</button>
+      </form>
+    </div>
+
+    <div id="loggedInPanel" class="hidden">
+      <p>Logged in as:</p>
+      <p id="loggedInEmail"></p>
+      <button class="primary" id="logoutButton" type="button">Logout</button>
+    </div>
+
+    <p id="loginMessage" class="muted" aria-live="polite"></p>
   </div>
 </section>
 
@@ -682,6 +713,104 @@ async function testConnection() {
   alert("Chad Academy database connected!");
 }
 testConnection();
+  const authStatus = document.getElementById("authStatus");
+const authForms = document.getElementById("authForms");
+const loggedInPanel = document.getElementById("loggedInPanel");
+const loginMessage = document.getElementById("loginMessage");
+
+function showAuthMessage(message) {
+  loginMessage.textContent = message;
+}
+
+function updateAuthUI(user) {
+  const loggedIn = Boolean(user);
+
+  authStatus.textContent = loggedIn
+    ? "You are logged in."
+    : "Create an account or log in.";
+
+  authForms.classList.toggle("hidden", loggedIn);
+  loggedInPanel.classList.toggle("hidden", !loggedIn);
+
+  document.getElementById("loggedInEmail").textContent =
+    user?.email || "";
+}
+
+document.getElementById("signupForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const email = document.getElementById("signupEmail").value.trim();
+  const password = document.getElementById("signupPassword").value;
+
+  showAuthMessage("Creating account...");
+
+  const { data, error } = await supabaseClient.auth.signUp({
+    email,
+    password,
+    options: {
+      emailRedirectTo: "https://jhonnyayush-max.github.io/Chads-academy/"
+    }
+  });
+
+  if (error) {
+    showAuthMessage(error.message);
+    return;
+  }
+
+  if (data.session) {
+    updateAuthUI(data.user);
+    showAuthMessage("Account created successfully!");
+  } else {
+    showAuthMessage("Account created! Check your email for confirmation.");
+  }
+});
+
+document.getElementById("realLoginForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const email = document.getElementById("loginEmail").value.trim();
+  const password = document.getElementById("loginPassword").value;
+
+  showAuthMessage("Logging in...");
+
+  const { data, error } = await supabaseClient.auth.signInWithPassword({
+    email,
+    password
+  });
+
+  if (error) {
+    showAuthMessage(error.message);
+    return;
+  }
+
+  updateAuthUI(data.user);
+  showAuthMessage("Login successful!");
+});
+
+document.getElementById("logoutButton").addEventListener("click", async () => {
+  const { error } = await supabaseClient.auth.signOut({ scope: "local" });
+
+  if (error) {
+    showAuthMessage(error.message);
+    return;
+  }
+
+  updateAuthUI(null);
+  showAuthMessage("Logged out successfully.");
+});
+
+supabaseClient.auth.getSession().then(({ data, error }) => {
+  if (error) {
+    showAuthMessage(error.message);
+    return;
+  }
+
+  updateAuthUI(data.session?.user ?? null);
+});
+
+supabaseClient.auth.onAuthStateChange((_event, session) => {
+  updateAuthUI(session?.user ?? null);
+});
 </script>
 </body>
 </html>
