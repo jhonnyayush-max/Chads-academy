@@ -203,7 +203,7 @@ return alert("Vote failed: "+error.message);
 votedIds.add(String(memberId));
 await loadMembers();
 }
-}  
+
 function fillBattleSelects(){  
   const list=publicMembers();  
   ["battleA","battleB"].forEach(id=>{  
