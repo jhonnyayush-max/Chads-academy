@@ -653,6 +653,35 @@ renderHome();
 renderRankings();
 populateBattles();
 </script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
+<script>
+const SUPABASE_URL = "https://grhmquilbkihjumxnquw.supabase.co";
+const SUPABASE_KEY = "YAHAN_APNI_SB_PUBLISHABLE_KEY_DAALO";
+
+const supabaseClient = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_KEY
+);
+
+console.log("Chad Academy Supabase connection ready!");
+
+async function testConnection() {
+  const { data, error } = await supabaseClient
+    .from("members")
+    .select("*")
+    .limit(1);
+
+  if (error) {
+    console.error("Database error:", error.message);
+    alert("Database connection error: " + error.message);
+    return;
+  }
+
+  console.log("Database connected successfully!");
+  alert("Chad Academy database connected!");
+}
+
+</script>
 </body>
 </html>
