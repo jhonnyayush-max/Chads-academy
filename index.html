@@ -70,7 +70,13 @@
     <div id="authForms">  
       <div class="grid">  
         <div><h2>Create account</h2><form id="signupForm"><div class="field"><label for="signupEmail">Email</label><input type="email" id="signupEmail" required autocomplete="email" placeholder="you@example.com"></div><div class="field"><label for="signupPassword">Password (minimum 8 characters)</label><input type="password" id="signupPassword" required minlength="8" autocomplete="new-password" placeholder="Create password"></div><button class="primary" type="submit">Sign Up</button></form></div>  
-        <div><h2>Login</h2><form id="realLoginForm"><div class="field"><label for="loginEmail">Email</label><input type="email" id="loginEmail" required autocomplete="email" placeholder="you@example.com"></div><div class="field"><label for="loginPassword">Password</label><input type="password" id="loginPassword" required autocomplete="current-password" placeholder="Your password"></div><button class="primary" type="submit">Login</button></form></div>  
+        <div><h2>Login</h2><form id="realLoginForm"><div class="field"><label for="loginEmail">Email</label><input type="email" id="loginEmail" required autocomplete="email" placeholder="you@example.com"></div><div class="field"><label for="loginPassword">Password</label><input type="password" id="loginPassword" required autocomplete="current-password" placeholder="Your password"></div><button class="primary" type="submit">Login</button>
+</form>
+
+<button class="secondary" id="googleLoginButton" type="button">
+  🌐 Continue with Google
+</button>
+      </div>
       </div>  
     </div>  
     <div id="loggedInPanel" class="hidden"><p>Logged in as:</p><p id="loggedInEmail"></p><p id="roleLabel" class="muted"></p><button class="primary" id="logoutButton" type="button">Logout</button></div>  
