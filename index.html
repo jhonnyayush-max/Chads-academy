@@ -97,7 +97,8 @@
   different column names, the relevant queries will need matching changes.  
 */  
 const SUPABASE_URL = "https://grhmquilbkihjumxnquw.supabase.co";  
-const SUPABASE_KEY = "sb_publishable_HQI0btnccFyhQ9f7dNhCPQ_osuYPSC6";  
+const SUPABASE_KEY = "sb_publishable_HQI0btnccFyhQ9f7dNhCPQ_osuYPSC6"; 
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 document.getElementById("googleLoginButton").addEventListener("click", async () => {
   const { error } = await sb.auth.signInWithOAuth({
     provider: "google",
