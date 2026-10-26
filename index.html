@@ -459,6 +459,46 @@ async function loadManageMembers(){
     });
   });
 }
+  async function loadAdmin(){
+if(!currentUser || currentRole !== "admin"){
+$("adminList").innerHTML =
+'<div class="panel">Admin access required.</div>';
+$("manageMembers").innerHTML = "";
+return;
+}
+
+const {data,error} = await sb
+.from("members")
+.select("*")
+.eq("status","pending")
+.order("created_at",{ascending:false});
+
+if(error){
+$("adminList").innerHTML =
+"<div class="panel">Could not load applications: ${escapeHTML(error.message)}</div>";
+return;
+}
+
+$("applicationTotal").textContent = (data || []).length;
+
+$("adminList").innerHTML = (data || []).length
+? data.map(m => "<article class="card"> <h3>${escapeHTML(memberName(m))}</h3> <p>${escapeHTML(m.social_username || "")}</p> <p>${escapeHTML(m.bio || "")}</p> <div class="actions"> <button class="primary" data-approve="${escapeHTML(m.id)}">Approve</button> <button class="secondary" data-reject="${escapeHTML(m.id)}">Reject</button> </div> </article>").join("")
+: '<div class="panel empty">No pending applications.</div>';
+
+$("adminList").querySelectorAll("[data-approve]").forEach(button => {
+button.addEventListener("click", () =>
+moderateMember(button.dataset.approve,true)
+);
+});
+
+$("adminList").querySelectorAll("[data-reject]").forEach(button => {
+button.addEventListener("click", () =>
+moderateMember(button.dataset.reject,false)
+);
+});
+
+await loadManageMembers();
+}
 async function moderateMember(id,approve){  
   if(currentRole!=="admin")return alert("Admin access required.");  
   const update=approve?{approved:true,status:"approved"}:{approved:false,status:"rejected"};  
