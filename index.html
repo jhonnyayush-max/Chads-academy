@@ -459,7 +459,7 @@ async function loadManageMembers(){
     });
   });
 }
-  async function loadAdmin(){
+ async function loadAdmin(){
 if(!currentUser || currentRole !== "admin"){
 $("adminList").innerHTML =
 '<div class="panel">Admin access required.</div>';
@@ -475,7 +475,7 @@ const {data,error} = await sb
 
 if(error){
 $("adminList").innerHTML =
-`<div class="panel">Could not load applications: ${escapeHTML(error.message)}</div>`;
+"<div class="panel">Could not load applications: ${escapeHTML(error.message)}</div>";
 return;
 }
 
@@ -498,6 +498,7 @@ moderateMember(button.dataset.reject,false)
 });
 
 await loadManageMembers();
+                            } 
 }
 async function moderateMember(id,approve){  
   if(currentRole!=="admin")return alert("Admin access required.");  
