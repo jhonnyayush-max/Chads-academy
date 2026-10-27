@@ -499,7 +499,6 @@ moderateMember(button.dataset.reject,false)
 
 await loadManageMembers();
 }
-}
 async function moderateMember(id,approve){  
   if(currentRole!=="admin")return alert("Admin access required.");  
   const update=approve?{approved:true,status:"approved"}:{approved:false,status:"rejected"};  
