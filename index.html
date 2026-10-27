@@ -475,7 +475,7 @@ const {data,error} = await sb
 
 if(error){
 $("adminList").innerHTML =
-"<div class="panel">Could not load applications: ${escapeHTML(error.message)}</div>";
+`<div class="panel">Could not load applications: ${escapeHTML(error.message)}</div>`;
 return;
 }
 
