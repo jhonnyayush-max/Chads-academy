@@ -198,31 +198,33 @@ votedIds=new Set((data||[]).map(v=>String(v.member_id)));
 }
 
 async function castVote(memberId){
-if(!currentUser){
-showPage("account");
-return;
-}
+    if(!currentUser){
+        showPage("account");
+        return;
+    }
 
-if(votedIds.has(String(memberId))){
-return alert("You have already voted for this profile.");
-}
+    const {data, error} = await sb.rpc("cast_vote", {
+        p_member_id: memberId
+    });
 
-const {error}=await sb.from("votes").insert({
-voter_id:currentUser.id,
-member_id:memberId
-});
+    if(error){
+        return alert("Vote failed: " + error.message);
+    }
 
-if(error){
-if(error.code==="23505"){
-votedIds.add(String(memberId));
-return alert("You have already voted for this profile.");
-}
-return alert("Vote failed: "+error.message);
-}
+    if(data === "not_logged_in"){
+        return alert("Please login again.");
+    }
 
-votedIds.add(String(memberId));
-await loadMembers();
-}
+    if(data === "cooldown"){
+        return alert("You can vote for this profile again after 24 hours.");
+    }
+
+    if(data === "success"){
+        await loadVoteHistory();
+        await loadMembers();
+        return alert("Vote submitted successfully!");
+    }
+  }
 
 function fillBattleSelects(){  
   const list=publicMembers();  
