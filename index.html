@@ -482,7 +482,17 @@ return;
 $("applicationTotal").textContent = (data || []).length;
 
 $("adminList").innerHTML = (data || []).length
-? data.map(m => "<article class="card"> <h3>${escapeHTML(memberName(m))}</h3> <p>${escapeHTML(m.social_username || "")}</p> <p>${escapeHTML(m.bio || "")}</p> <div class="actions"> <button class="primary" data-approve="${escapeHTML(m.id)}">Approve</button> <button class="secondary" data-reject="${escapeHTML(m.id)}">Reject</button> </div> </article>").join("")
+? data.map(m => `
+  <article class="card">
+    <h3>${escapeHTML(memberName(m))}</h3>
+    <p>${escapeHTML(m.social_username || "")}</p>
+    <p>${escapeHTML(m.bio || "")}</p>
+    <div class="actions">
+      <button class="primary" data-approve="${escapeHTML(m.id)}">Approve</button>
+      <button class="secondary" data-reject="${escapeHTML(m.id)}">Reject</button>
+    </div>
+  </article>
+`).join("")
 : '<div class="panel empty">No pending applications.</div>';
 
 $("adminList").querySelectorAll("[data-approve]").forEach(button => {
