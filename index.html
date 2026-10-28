@@ -496,9 +496,21 @@ $("applicationTotal").textContent = (data || []).length;
 $("adminList").innerHTML = (data || []).length
 ? data.map(m => `
   <article class="card">
+    <img
+      src="${escapeHTML(m.photo_url || '')}"
+      alt="${escapeHTML(memberName(m))}"
+      style="width:100%;max-width:280px;height:280px;object-fit:cover;border-radius:12px;display:block;margin-bottom:12px;"
+      onerror="this.style.display='none'"
+    >
     <h3>${escapeHTML(memberName(m))}</h3>
-    <p>${escapeHTML(m.social_username || "")}</p>
-    <p>${escapeHTML(m.bio || "")}</p>
+    <p><strong>Username:</strong> ${escapeHTML(m.social_username || "")}</p>
+    <p><strong>Platform:</strong> ${escapeHTML(m.platform || "")}</p>
+    <p><strong>Bio:</strong> ${escapeHTML(m.bio || "")}</p>
+    <p><strong>Profile link:</strong> ${
+      m.social_link
+        ? `<a href="${escapeHTML(m.social_link)}" target="_blank" rel="noopener noreferrer">Open profile</a>`
+        : "Not provided"
+    }</p>
     <div class="actions">
       <button class="primary" data-approve="${escapeHTML(m.id)}">Approve</button>
       <button class="secondary" data-reject="${escapeHTML(m.id)}">Reject</button>
