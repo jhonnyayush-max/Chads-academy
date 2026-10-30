@@ -366,8 +366,9 @@ async function loadBattles(){
   }
 
   const visibleBattles = data.filter(b =>
-    ["active", "paused", "completed"].includes(b.status)
-  );
+  ["active", "paused", "completed"].includes(b.status) ||
+  (currentRole === "admin" && b.status === "pending")
+);
 
   if (!visibleBattles.length) {
     box.innerHTML = `<p class="muted">No live battles right now.</p>`;
