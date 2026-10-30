@@ -485,7 +485,7 @@ $("createBattleBtn")?.addEventListener("click", async () => {
   showMessage("battleAdminMessage", "Battle created! Press Start to begin.");
   await loadBattles();
 });
-$("joinForm").addEventListener("submit",async e=>{  
+$("joinForm")?.addEventListener("submit",async e=>{
   e.preventDefault();  
   if(!currentUser){showMessage("joinMessage","Please create an account or log in before applying.",true);return showPage("account");}  
     const name = $("joinName").value.trim();
