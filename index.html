@@ -249,22 +249,239 @@ async function castVote(memberId){
     }
   }
 
-function fillBattleSelects(){  
-  const list=publicMembers();  
-  ["battleA","battleB"].forEach(id=>{  
-    const old=$(id).value;  
-    $(id).innerHTML=list.map(m=>`<option value="${escapeHTML(m.id)}">${escapeHTML(memberName(m))}</option>`).join("");  
-    if(old && list.some(m=>String(m.id)===old))$(id).value=old;  
-  });  
-}  
-$("compareBtn").addEventListener("click",()=>{  
-  const a=publicMembers().find(m=>String(m.id)===$("battleA").value);  
-  const b=publicMembers().find(m=>String(m.id)===$("battleB").value);  
-  const result=$("battleResult"); result.classList.remove("hidden","err");  
-  if(!a||!b||String(a.id)===String(b.id)){result.textContent="Choose two different approved profiles.";return;}  
-  const av=memberScore(a),bv=memberScore(b);  
-  result.textContent=av===bv?`It's a tie! ${memberName(a)}: ${av} · ${memberName(b)}: ${bv}`:`${memberName(av>bv?a:b)} is ahead! ${memberName(a)}: ${av} · ${memberName(b)}: ${bv}`;  
-});  
+function fillBattleSelects(){
+  const list = publicMembers();
+
+  ["battleA","battleB"].forEach(id => {
+    const select = $(id);
+    if (!select) return;
+
+    const old = select.value;
+    select.innerHTML = list.map(m =>
+      `<option value="${escapeHTML(m.id)}">${escapeHTML(memberName(m))}</option>`
+    ).join("");
+
+    if (old && list.some(m => String(m.id) === old)) {
+      select.value = old;
+    }
+  });
+
+  loadBattles();
+}
+
+async function loadBattles(){
+  const box = $("battleList");
+  if (!box) return;
+
+  if (currentRole === "admin") {
+    $("battleAdminPanel")?.classList.remove("hidden");
+  } else {
+    $("battleAdminPanel")?.classList.add("hidden");
+  }
+
+  box.innerHTML = `<p class="muted">Loading battles...</p>`;
+
+  // Automatically finalize battles whose time has expired.
+  const { error: finishError } =
+    await sb.rpc("finalize_expired_battles");
+
+  if (finishError) {
+    console.error("Battle finalization:", finishError);
+  }
+
+  const { data, error } = await sb
+    .from("battles")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Loading battles:", error);
+    box.innerHTML = `<p class="muted">Could not load battles.</p>`;
+    return;
+  }
+
+  if (!data || data.length === 0) {
+    box.innerHTML = `<p class="muted">No battles have been created yet.</p>`;
+    return;
+  }
+
+  const visibleBattles = data.filter(b =>
+    ["active", "paused", "completed"].includes(b.status)
+  );
+
+  if (!visibleBattles.length) {
+    box.innerHTML = `<p class="muted">No live battles right now.</p>`;
+    return;
+  }
+
+  const cards = [];
+
+  for (const battle of visibleBattles) {
+    const a = publicMembers().find(m => String(m.id) === String(battle.contestant_a));
+    const b = publicMembers().find(m => String(m.id) === String(battle.contestant_b));
+
+    if (!a || !b) continue;
+
+    const { data: counts, error: countError } =
+      await sb.rpc("get_battle_vote_counts", {
+        p_battle_id: battle.id
+      });
+
+    if (countError) {
+      console.error("Battle vote counts:", countError);
+    }
+
+    const votes = counts || [];
+    const av = Number(votes.find(v => String(v.member_id) === String(a.id))?.vote_count || 0);
+    const bv = Number(votes.find(v => String(v.member_id) === String(b.id))?.vote_count || 0);
+
+    const remaining = battle.status === "paused"
+      ? Number(battle.paused_remaining_seconds || 0)
+      : battle.ends_at
+        ? Math.max(0, Math.floor((new Date(battle.ends_at).getTime() - Date.now()) / 1000))
+        : 0;
+
+    const timeText = battle.status === "paused"
+      ? "Paused"
+      : battle.status === "completed"
+        ? "Completed"
+        : formatBattleTime(remaining);
+
+    const voteControls = battle.status === "active"
+      ? currentUser
+        ? `<button class="primary battleVoteBtn" data-battle="${escapeHTML(battle.id)}" data-member="${escapeHTML(a.id)}">Vote ${escapeHTML(memberName(a))}</button>
+           <button class="primary battleVoteBtn" data-battle="${escapeHTML(battle.id)}" data-member="${escapeHTML(b.id)}">Vote ${escapeHTML(memberName(b))}</button>`
+        : `<button class="secondary" data-page="account">Login to vote</button>`
+      : "";
+
+    const adminControls = currentRole === "admin"
+      ? `<div class="actions">
+          ${battle.status === "pending" ? `<button class="primary battleActionBtn" data-action="start" data-id="${escapeHTML(battle.id)}">Start</button>` : ""}
+          ${battle.status === "active" ? `<button class="secondary battleActionBtn" data-action="pause" data-id="${escapeHTML(battle.id)}">Pause</button>` : ""}
+          ${battle.status === "paused" ? `<button class="primary battleActionBtn" data-action="resume" data-id="${escapeHTML(battle.id)}">Resume</button>` : ""}
+          ${["active","paused","completed"].includes(battle.status) ? `<button class="secondary battleActionBtn" data-action="restart" data-id="${escapeHTML(battle.id)}">Restart</button>` : ""}
+          ${["active","paused","pending"].includes(battle.status) ? `<button class="secondary battleActionBtn" data-action="end" data-id="${escapeHTML(battle.id)}">End</button>` : ""}
+        </div>`
+      : "";
+
+    cards.push(`
+      <article class="card">
+        <h3>⚔️ ${escapeHTML(memberName(a))} VS ${escapeHTML(memberName(b))}</h3>
+        <div class="grid">
+          <div>
+            <img class="avatar" src="${escapeHTML(memberPhoto(a))}" alt="">
+            <h3>${escapeHTML(memberName(a))}</h3>
+            <p class="muted">${escapeHTML(a.platform || "")} ${escapeHTML(a.social_username || "")}</p>
+            <p><strong>${av} votes</strong></p>
+          </div>
+          <div>
+            <img class="avatar" src="${escapeHTML(memberPhoto(b))}" alt="">
+            <h3>${escapeHTML(memberName(b))}</h3>
+            <p class="muted">${escapeHTML(b.platform || "")} ${escapeHTML(b.social_username || "")}</p>
+            <p><strong>${bv} votes</strong></p>
+          </div>
+        </div>
+        <p class="tag">${escapeHTML(battle.status.toUpperCase())}</p>
+        <p class="muted">Time: ${escapeHTML(timeText)}</p>
+        <div class="actions">${voteControls}</div>
+        ${adminControls}
+      </article>
+    `);
+  }
+
+  box.innerHTML = cards.join("") ||
+    `<p class="muted">No battles available to display.</p>`;
+
+  attachBattleButtons();
+}
+
+function formatBattleTime(seconds){
+  const d = Math.floor(seconds / 86400);
+  const h = Math.floor((seconds % 86400) / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+
+  return `${d}d ${h}h ${m}m ${s}s`;
+}
+
+function attachBattleButtons(){
+  document.querySelectorAll(".battleVoteBtn").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      if (!currentUser) return showPage("account");
+
+      btn.disabled = true;
+
+      const { data, error } = await sb.rpc("cast_battle_vote", {
+        p_battle_id: btn.dataset.battle,
+        p_member_id: btn.dataset.member
+      });
+
+      if (error) {
+        alert(error.message);
+      } else if (data === "already_voted") {
+        alert("You have already voted in this battle.");
+      } else {
+        alert("Your battle vote has been submitted!");
+      }
+
+      await loadBattles();
+    });
+  });
+
+  document.querySelectorAll(".battleActionBtn").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      const action = btn.dataset.action;
+
+      if (action === "restart" && !confirm("Restart this battle? All votes will be reset.")) return;
+      if (action === "end" && !confirm("End this battle now?")) return;
+
+      btn.disabled = true;
+
+      const { error } = await sb.rpc("manage_battle", {
+        p_battle_id: btn.dataset.id,
+        p_action: action
+      });
+
+      if (error) {
+        alert(error.message);
+      } else {
+        alert("Battle updated successfully!");
+      }
+
+      await loadBattles();
+    });
+  });
+
+  document.querySelectorAll("[data-page='account']").forEach(btn => {
+    btn.addEventListener("click", () => showPage("account"));
+  });
+}
+
+$("createBattleBtn")?.addEventListener("click", async () => {
+  if (currentRole !== "admin") return;
+
+  const a = $("battleA").value;
+  const b = $("battleB").value;
+  const duration = Number($("battleDuration").value);
+
+  if (!a || !b || a === b) {
+    return showMessage("battleAdminMessage", "Choose two different contestants.", true);
+  }
+
+  const { error } = await sb.rpc("create_battle", {
+    p_contestant_a: a,
+    p_contestant_b: b,
+    p_duration_seconds: duration
+  });
+
+  if (error) {
+    showMessage("battleAdminMessage", error.message, true);
+    return;
+  }
+
+  showMessage("battleAdminMessage", "Battle created! Press Start to begin.");
+  await loadBattles();
+});
 $("joinForm").addEventListener("submit",async e=>{  
   e.preventDefault();  
   if(!currentUser){showMessage("joinMessage","Please create an account or log in before applying.",true);return showPage("account");}  
