@@ -37,32 +37,45 @@
     <p class="muted">Rankings are sorted by votes. Only approved profiles are public.</p>  
   </div>  
   <div id="rankList" class="grid"><div class="empty">Loading…</div></div>  
-</section>  <section id="battles" class="page hidden">  
-  <h1 class="page-title">⚔️ Battles</h1>  
-  <div class="panel"><p class="muted">Pick two approved profiles and compare their community vote totals.</p>  
-    <div class="grid"><div class="field"><label for="battleA">First profile</label><select id="battleA"></select></div><div class="field"><label for="battleB">Second profile</label><select id="battleB"></select></div></div>  
-    <button class="primary" id="compareBtn">Compare profiles</button><div id="battleResult" class="status hidden"></div>  
-  </div>  
-</section>  <section id="join" class="page hidden">  
-  <h1 class="page-title">📩 Apply for Ranking</h1>  
-  <div class="panel">  
-    <p class="muted">Log in first. Submit one genuine profile application; it will stay pending until an administrator reviews it.</p>  
-    <form id="joinForm">  
-      <div class="field"><label for="joinName">Display name *</label><input id="joinName" maxlength="45" required placeholder="Your display name"></div>  
-    <div class="field">
-  <label for="joinPhoto">Choose Profile Photo *</label>
-  <input id="joinPhoto" type="file" accept="image/*" required>
-  <p class="small">Select a photo from your gallery.</p>
+</section> <section id="battles" class="page hidden">
+  <h1 class="page-title">⚔️ Battles</h1>
+
+  <div class="panel">
+    <h2>🏆 Live Battles</h2>
+    <p class="muted">Vote for your favourite contestant!</p>
+    <div id="battleList">
+      <p class="muted">Loading battles...</p>
     </div>
-      <div class="field"><label for="joinSocial">Social media username *</label><input id="joinSocial" maxlength="80" required placeholder="@yourusername"></div>  
-      <div class="field"><label for="joinPlatform">Social media platform *</label><select id="joinPlatform" required><option value="">Select platform</option><option>TikTok</option><option>Instagram</option><option>YouTube</option><option>X</option><option>Facebook</option><option>Other</option></select></div>  
-      <div class="field"><label for="joinLink">Social profile link (optional)</label><input id="joinLink" type="url" placeholder="https://..."></div>  
-      <div class="field"><label for="joinCategory">Category *</label><select id="joinCategory" required><option value="chads">Chads Ranking</option><option value="potential">HTN &amp; Potential</option></select></div>  
-      <div class="field"><label for="joinBio">Your bio *</label><textarea id="joinBio" maxlength="500" rows="4" required placeholder="Tell people about yourself…"></textarea></div>  
-      <button class="primary" type="submit">Submit Application</button>  
-    </form>  
-    <div id="joinMessage" class="status hidden" aria-live="polite"></div>  
-  </div>  
+  </div>
+
+  <div class="panel hidden" id="battleAdminPanel">
+    <h2>⚙️ Battle Administration</h2>
+
+    <div class="field">
+      <label for="battleA">First Contestant</label>
+      <select id="battleA"></select>
+    </div>
+
+    <div class="field">
+      <label for="battleB">Second Contestant</label>
+      <select id="battleB"></select>
+    </div>
+
+    <div class="field">
+      <label for="battleDuration">Battle Duration</label>
+      <select id="battleDuration">
+        <option value="86400">24 Hours</option>
+        <option value="172800">2 Days</option>
+        <option value="604800">1 Week</option>
+        <option value="2592000">1 Month</option>
+      </select>
+    </div>
+
+    <button class="primary" id="createBattleBtn">Create Battle</button>
+
+    <div id="battleAdminMessage" class="status hidden"></div>
+    <div id="battleAdminList"></div>
+  </div>
 </section>  <section id="account" class="page hidden">  
   <h1 class="page-title">🔐 Chad Academy Account</h1>  
   <div class="panel">  
