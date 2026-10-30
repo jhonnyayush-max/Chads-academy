@@ -76,7 +76,64 @@
     <div id="battleAdminMessage" class="status hidden"></div>
     <div id="battleAdminList"></div>
   </div>
-</section>  <section id="account" class="page hidden">  
+</section> 
+  <section id="join" class="page hidden">
+  <h1 class="page-title">📝 Apply for Ranking</h1>
+
+  <div class="panel">
+    <form id="joinForm">
+
+      <div class="field">
+        <label for="joinName">Your Name</label>
+        <input type="text" id="joinName" required placeholder="Enter your name">
+      </div>
+
+      <div class="field">
+        <label for="joinPhoto">Profile Photo</label>
+        <input type="file" id="joinPhoto" accept="image/*" required>
+      </div>
+
+      <div class="field">
+        <label for="joinSocial">Social Username</label>
+        <input type="text" id="joinSocial" required placeholder="@username">
+      </div>
+
+      <div class="field">
+        <label for="joinPlatform">Social Platform</label>
+        <select id="joinPlatform" required>
+          <option value="">Select Platform</option>
+          <option value="Instagram">Instagram</option>
+          <option value="YouTube">YouTube</option>
+          <option value="TikTok">TikTok</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="joinLink">Social Profile Link (Optional)</label>
+        <input type="url" id="joinLink" placeholder="https://...">
+      </div>
+
+      <div class="field">
+        <label for="joinCategory">Ranking Category</label>
+        <select id="joinCategory" required>
+          <option value="chads">Chads Ranking</option>
+          <option value="potential">HTN & Potential</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="joinBio">About Yourself</label>
+        <textarea id="joinBio" rows="4" required placeholder="Write something about yourself"></textarea>
+      </div>
+
+      <button class="primary" type="submit">Submit Application</button>
+      <p id="joinMessage" class="status hidden"></p>
+
+    </form>
+  </div>
+</section>
+  <section id="account" class="page hidden">  
   <h1 class="page-title">🔐 Chad Academy Account</h1>  
   <div class="panel">  
     <p id="authStatus" class="muted">Checking account status…</p>  
