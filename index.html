@@ -148,7 +148,10 @@ function showPage(id) {
   document.querySelectorAll(".page").forEach(p => p.classList.toggle("hidden", p.id !== id));  
   window.scrollTo({top:0,behavior:"smooth"});  
   if (id === "rankings") renderRankings();  
-  if (id === "battles") fillBattleSelects();  
+  if (id === "battles") {
+  fillBattleSelects();
+  loadBattles();
+  }
   if (id === "admin") loadAdmin();  
 }  
 document.querySelectorAll("[data-page]").forEach(btn => btn.addEventListener("click", () => showPage(btn.dataset.page)));  
