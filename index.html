@@ -366,7 +366,7 @@ async function loadBattles(){
   }
 
   const visibleBattles = data.filter(b =>
-  ["active", "paused", "completed"].includes(b.status) ||
+  ["active", "paused"].includes(b.status) ||
   (currentRole === "admin" && b.status === "pending")
 );
 
