@@ -1390,29 +1390,7 @@ body::before {
       transparent 24px 29px);
 }
 
-/* Central marble statue-inspired silhouette */
-body::after {
-  content: "";
-  position: fixed;
-  z-index: 0;
-  pointer-events: none;
-  width: 250px;
-  height: 490px;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -45%);
-  opacity: .105;
-  background:
-    /* Head */
-    radial-gradient(ellipse at 50% 9%, #e8dfc9 0 8%, transparent 8.5%),
-    /* Shoulders and chest */
-    radial-gradient(ellipse at 50% 29%, #e8dfc9 0 25%, transparent 25.5%),
-    /* Waist */
-    linear-gradient(#e8dfc9, #e8dfc9) 37% 39% / 26% 25% no-repeat,
-    /* Draped cloth */
-    linear-gradient(145deg, transparent 35%, #e8dfc9 36% 68%, transparent 69%) 50% 72% / 70% 38% no-repeat;
-  filter: drop-shadow(0 0 18px rgba(220,190,125,.2));
-}
+
 
 /* Keep website content above background */
 body > * {
