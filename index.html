@@ -678,10 +678,27 @@ function memberCard(m, rank=null) {
       </div>
     </article>`;
  }
-function attachVoteButtons(){  
-  document.querySelectorAll(".voteBtn").forEach(btn=>btn.addEventListener("click",()=>castVote(btn.dataset.id)));  
-  document.querySelectorAll("[data-page='account']").forEach(btn=>btn.addEventListener("click",()=>showPage("account")));  
-}  
+function attachVoteButtons(){
+  document.querySelectorAll(".voteBtn").forEach(btn=>{
+    btn.addEventListener("click", event=>{
+      event.stopPropagation();
+      castVote(btn.dataset.id);
+    });
+  });
+
+  document.querySelectorAll("[data-page='account']").forEach(btn=>{
+    btn.addEventListener("click",()=>showPage("account"));
+  });
+
+  document.querySelectorAll(".member-card").forEach(card=>{
+    card.addEventListener("click", event=>{
+      if(event.target.closest("button, a")) return;
+
+      const id = card.dataset.memberId;
+      if(id) openMemberProfile(id);
+    });
+  });
+} 
 async function loadMembers() {  
   const {data,error} = await sb.from("members").select("*");  
   if(error){console.error("Loading members:",error); return showLoadError(error);}  
