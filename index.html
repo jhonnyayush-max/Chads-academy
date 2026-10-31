@@ -1606,7 +1606,29 @@ body > * {
       </div>
       </div>  
     </div>  
-    <div id="loggedInPanel" class="hidden"><p>Logged in as:</p><p id="loggedInEmail"></p><p id="roleLabel" class="muted"></p><button class="primary" id="logoutButton" type="button">Logout</button></div>  
+    <div id="loggedInPanel" class="hidden"><p>Logged in as:</p><p id="loggedInEmail"></p><p id="roleLabel" class="muted"></p><button class="primary" id="logoutButton" type="button">Logout</button> <hr style="margin:20px 0">
+<h2>✏️ Edit My Profile</h2>
+
+<form id="editProfileForm">
+  <label>New Name (max 10 characters)</label>
+  <input id="editName" maxlength="10" required>
+
+  <label>New Profile Photo</label>
+  <input id="editPhoto" type="file" accept="image/*">
+
+  <label>Social Username</label>
+  <input id="editSocialUsername">
+
+  <label>Social Link</label>
+  <input id="editSocialLink" type="url">
+
+  <label>Bio (max 20 characters)</label>
+  <input id="editBio" maxlength="20">
+
+  <button class="primary" type="submit">Save Profile</button>
+</form>
+
+<p id="editProfileMessage" class="status hidden"></p> </div>  
     <p id="loginMessage" class="status hidden" aria-live="polite"></p>  
   </div>  
 </section>  <section id="admin" class="page hidden">  
