@@ -757,11 +757,18 @@ async function loadMembers() {
   members = data || [];  
   renderAll();  
 }  
-function showLoadError(error){  
-  const msg = `Could not load profiles: ${error.message}. Check the members table columns and Supabase SELECT permissions.`;  
-  $("rankList").innerHTML = `<div class="panel">${escapeHTML(msg)}</div>`;  
-  $("homeTop").innerHTML = `<div class="panel">${escapeHTML(msg)}</div>`;  
-}  
+function showLoadError(error){
+  const msg = `Could not load profiles: ${error.message}. Check Supabase permissions.`;
+
+  $("rankList").innerHTML =
+    `<div class="panel">${escapeHTML(msg)}</div>`;
+
+  $("homeChadsTop").innerHTML =
+    `<div class="panel">${escapeHTML(msg)}</div>`;
+
+  $("homePotentialTop").innerHTML =
+    `<div class="panel">${escapeHTML(msg)}</div>`;
+    }
  function openMemberProfile(id) {
   const m = members.find(member => String(member.id) === String(id));
   if (!m) return;
