@@ -648,6 +648,18 @@ document.querySelectorAll(".categoryBtn").forEach(btn =>
     renderRankings();
   })
 );
+ document.querySelectorAll(".home-category-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const category = btn.dataset.homeCategory;
+
+    $("homeChadsSection").classList.toggle("hidden", category !== "chads");
+    $("homePotentialSection").classList.toggle("hidden", category !== "potential");
+
+    document.querySelectorAll(".home-category-btn").forEach(b => {
+      b.classList.toggle("active", b === btn);
+    });
+  });
+});
 function memberScore(m){return Number(m.vote_count ?? m.voteCount ?? m.score ?? 0)}  
 function memberName(m){return m.display_name ?? m.name ?? "Unnamed member"}  
 function memberPhoto(m){return safeHttpUrl(m.photo_url ?? m.photo ?? "")}  
