@@ -1394,13 +1394,47 @@ moderateMember(button.dataset.reject,false)
 
 await loadManageMembers();
 }
-async function moderateMember(id,approve){  
-  if(currentRole!=="admin")return alert("Admin access required.");  
-  const update=approve?{approved:true,status:"approved"}:{approved:false,status:"rejected"};  
-  const {error}=await sb.from("members").update(update).eq("id",id);  
-  if(error)return alert("Could not update application: "+error.message);  
-  await loadAdmin();await loadMembers();  
-}  
+async function moderateMember(id,approve){
+if(currentRole!=="admin")return alert("Admin access required.");
+
+if(approve){
+const {data: applicant,error: applicantError}=await sb
+.from("members")
+.select("id,category")
+.eq("id",id)
+.single();
+
+if(applicantError)return alert("Could not find application: "+applicantError.message);
+
+const category=applicant.category ?? "chads";
+
+const {count,error: countError}=await sb
+  .from("members")
+  .select("id",{count:"exact",head:true})
+  .eq("category",category)
+  .or("status.eq.approved,approved.eq.true");
+
+if(countError)return alert("Could not check available seats: "+countError.message);
+
+if((count ?? 0)>=1000){
+  return alert(category==="potential"
+    ? "HTN & Potential category is full (1,000 members). Remove a member first."
+    : "Chads Ranking is full (1,000 members). Remove a member first.");
+}
+
+}
+
+const update=approve
+? {approved:true,status:"approved"}
+: {approved:false,status:"rejected"};
+
+const {error}=await sb.from("members").update(update).eq("id",id);
+
+if(error)return alert("Could not update application: "+error.message);
+
+await loadAdmin();
+await loadMembers();
+}
 $("refreshAdmin").addEventListener("click",loadAdmin);  
 document.querySelectorAll("[data-page]").forEach(btn=>btn.addEventListener("click",()=>{if(btn.dataset.page==="admin")loadAdmin();}));  
   
