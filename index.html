@@ -2270,14 +2270,14 @@ $("signupForm").addEventListener("submit",async e=>{
   const email=$("signupEmail").value.trim(),password=$("signupPassword").value;  
   const {data,error}=await sb.auth.signUp({email,password,options:{emailRedirectTo:"https://jhonnyayush-max.github.io/Chads-academy/"}});  
   if(error)return showMessage("loginMessage",error.message,true);  
-  if(data.session){updateAuthUI(data.user);await refreshRole(data.user);await loadVoteHistory();showMessage("loginMessage","Account created successfully.");}  
+  if(data.session){updateAuthUI(data.user);await refreshRole(data.user);await loadVoteHistory(); await loadMyEditableProfile(); showMessage("loginMessage","Account created successfully.");}  
   else showMessage("loginMessage","Account created. Check your email for confirmation, then log in.");  
 });  
 $("realLoginForm").addEventListener("submit",async e=>{  
   e.preventDefault();showMessage("loginMessage","Logging in…");  
   const {data,error}=await sb.auth.signInWithPassword({email:$("loginEmail").value.trim(),password:$("loginPassword").value});  
   if(error)return showMessage("loginMessage",error.message,true);  
-  updateAuthUI(data.user);await refreshRole(data.user);await loadVoteHistory();showMessage("loginMessage","Login successful.");  
+  updateAuthUI(data.user);await refreshRole(data.user);await loadVoteHistory(); await loadMyEditableProfile(); showMessage("loginMessage","Login successful.");  
 });  
 $("logoutButton").addEventListener("click",async()=>{  
   const {error}=await sb.auth.signOut();  
