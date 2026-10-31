@@ -710,6 +710,37 @@ function showLoadError(error){
   $("rankList").innerHTML = `<div class="panel">${escapeHTML(msg)}</div>`;  
   $("homeTop").innerHTML = `<div class="panel">${escapeHTML(msg)}</div>`;  
 }  
+ function openMemberProfile(id) {
+  const m = members.find(member => String(member.id) === String(id));
+  if (!m) return;
+
+  const photo = memberPhoto(m);
+  const social = escapeHTML(m.social_username ?? m.social ?? "");
+  const platform = escapeHTML(m.platform ?? "");
+  const link = safeHttpUrl(m.social_link ?? m.link ?? "");
+  const bio = escapeHTML(m.bio ?? "");
+  const category = memberCategory(m);
+
+  $("profileDetails").innerHTML = `
+    <div class="profile-detail">
+      ${photo
+        ? `<img class="avatar" src="${escapeHTML(photo)}" alt="Member photo">`
+        : `<div class="avatar avatar-placeholder">♛</div>`
+      }
+      <h1>${escapeHTML(memberName(m))}</h1>
+      <span class="tag">${escapeHTML(category === "potential" ? "HTN & Potential" : "Chads Ranking")}</span>
+      <h2>${memberScore(m)} Votes</h2>
+      ${platform ? `<p>Platform: ${platform}</p>` : ""}
+      ${social ? `<p>Username: ${social}</p>` : ""}
+      ${bio ? `<p>${bio}</p>` : ""}
+      ${link ? `<a class="secondary" href="${escapeHTML(link)}" target="_blank" rel="noopener noreferrer">Visit Social Profile ↗</a>` : ""}
+      ${currentUser ? `<button class="primary voteBtn" data-id="${escapeHTML(m.id)}">▲ Vote</button>` : ""}
+    </div>
+  `;
+
+  showPage("memberProfile");
+  attachVoteButtons();
+ }
 function renderRankings(){  
   const list=sortedMembers(currentCategory);  
   $("rankList").innerHTML=list.length?list.map((m,i)=>memberCard(m,i+1)).join(""):`<div class="panel empty">No approved profiles in this category yet.</div>`;  
