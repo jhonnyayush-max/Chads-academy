@@ -771,7 +771,7 @@ function renderAll(){
     `<div class="panel empty">No approved Chads yet.</div>`;
 
   $("homePotentialTop").innerHTML =
-    sortedMembers("potential").slice(0,3)
+    sortedMembers("potential")
       .map((m,i)=>memberCard(m,i+1)).join("") ||
     `<div class="panel empty">No approved profiles yet.</div>`;
 
