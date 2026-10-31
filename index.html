@@ -766,7 +766,7 @@ function renderAll(){
   if(stats) stats.classList.toggle("hidden", currentRole !== "admin");
 
   $("homeChadsTop").innerHTML =
-    sortedMembers("chads").slice(0,3)
+    sortedMembers("chads")
       .map((m,i)=>memberCard(m,i+1)).join("") ||
     `<div class="panel empty">No approved Chads yet.</div>`;
 
