@@ -627,12 +627,20 @@ function showPage(id) {
   }
   if (id === "admin") loadAdmin();  
 }  
-document.querySelectorAll("[data-page]").forEach $("backToRankings").addEventListener("click", () => {
+document.querySelectorAll("[data-page]").forEach(btn =>
+  btn.addEventListener("click", () => showPage(btn.dataset.page))
+);
+
+$("backToRankings").addEventListener("click", () => {
   showPage("rankings");
-}); (btn => btn.addEventListener("click", () => showPage(btn.dataset.page)));  
-document.querySelectorAll(".categoryBtn").forEach(btn => btn.addEventListener("click", () => {  
-  currentCategory = btn.dataset.category; renderRankings();  
-}));  
+});
+
+document.querySelectorAll(".categoryBtn").forEach(btn =>
+  btn.addEventListener("click", () => {
+    currentCategory = btn.dataset.category;
+    renderRankings();
+  })
+);
 function memberScore(m){return Number(m.vote_count ?? m.voteCount ?? m.score ?? 0)}  
 function memberName(m){return m.display_name ?? m.name ?? "Unnamed member"}  
 function memberPhoto(m){return safeHttpUrl(m.photo_url ?? m.photo ?? "")}  
