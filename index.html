@@ -412,19 +412,26 @@ footer {
     </div>
   </div>
 
-  <section class="home-ranking">
-    <h2>♛ Chads Ranking</h2>
-    <div id="homeChadsTop" class="grid">
-      <div class="empty">Loading…</div>
-    </div>
-  </section>
+<div class="home-category-tabs">
+  <button class="home-category-btn active" data-home-category="chads">
+    ♛ CHADS RANKING
+  </button>
+  <button class="home-category-btn" data-home-category="potential">
+    ✦ HTN &amp; POTENTIAL
+  </button>
+</div>
 
-  <section class="home-ranking">
-    <h2>✦ HTN &amp; Potential</h2>
-    <div id="homePotentialTop" class="grid">
-      <div class="empty">Loading…</div>
-    </div>
-  </section>
+<section class="home-ranking" id="homeChadsSection">
+  <div id="homeChadsTop" class="grid">
+    <div class="empty">Loading…</div>
+  </div>
+</section>
+
+<section class="home-ranking hidden" id="homePotentialSection">
+  <div id="homePotentialTop" class="grid">
+    <div class="empty">Loading…</div>
+  </div>
+</section>
 </section>  <section id="rankings" class="page hidden">
   <div class="ranking-header">
     <span class="tag">THE HALL OF RANKINGS</span>
