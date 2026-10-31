@@ -1215,10 +1215,6 @@ function publicMembers(){return members.filter(isApproved)}
 function sortedMembers(category){return publicMembers().filter(m=>memberCategory(m)===category).sort((a,b)=>memberScore(b)-memberScore(a))}  
 function memberCard(m, rank=null) {
   const photo = memberPhoto(m);
-  const social = escapeHTML(m.social_username ?? m.social ?? "");
-  const platform = escapeHTML(m.platform ?? "");
-  const link = safeHttpUrl(m.social_link ?? m.link ?? "");
-  const bio = escapeHTML(m.bio ?? "");
   const category = memberCategory(m);
 
   let rankClass = "";
@@ -1227,7 +1223,7 @@ function memberCard(m, rank=null) {
   else if (rank === 3) rankClass = category === "potential" ? "potential-three" : "top-three";
 
   const voteButton = currentUser
-    ? `<button class="primary voteBtn" data-id="${escapeHTML(m.id)}">▲ Vote (${memberScore(m)})</button>`
+    ? `<button class="primary voteBtn" data-id="${escapeHTML(m.id)}">▲ VOTE (${memberScore(m)})</button>`
     : `<button class="secondary" data-page="account">Login to vote</button>`;
 
   return `
@@ -1238,20 +1234,15 @@ function memberCard(m, rank=null) {
           ? `<img class="avatar" src="${escapeHTML(photo)}" alt="" onerror="this.style.visibility='hidden'">`
           : `<div class="avatar avatar-placeholder">♛</div>`
         }
-        <div class="member-info" style="min-width:0">
+        <div class="member-info">
           <h3>${escapeHTML(memberName(m))}</h3>
-          <span class="tag">${escapeHTML(category === "potential" ? "HTN & Potential" : "Chads Ranking")}</span>
-          
-        
-          <p class="small">${memberScore(m)} vote(s)</p>
           <div class="actions">
             ${voteButton}
-            ${link ? `<a class="secondary" href="${escapeHTML(link)}" target="_blank" rel="noopener noreferrer">Social profile ↗</a>` : ""}
           </div>
         </div>
       </div>
     </article>`;
- }
+}
 function attachVoteButtons(){
   document.querySelectorAll(".voteBtn").forEach(btn=>{
     btn.addEventListener("click", event=>{
