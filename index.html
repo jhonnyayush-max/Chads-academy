@@ -1614,28 +1614,40 @@ async function loadBattles(){
       : "";
 
     cards.push(`
-      <article class="card">
-        <h3>⚔️ ${escapeHTML(memberName(a))} VS ${escapeHTML(memberName(b))}</h3>
-        <div class="grid">
-          <div>
-            <img class="avatar" src="${escapeHTML(memberPhoto(a))}" alt="">
-            <h3>${escapeHTML(memberName(a))}</h3>
-            <p class="muted">${escapeHTML(a.platform || "")} ${escapeHTML(a.social_username || "")}</p>
-            <p><strong>${av} votes</strong></p>
-          </div>
-          <div>
-            <img class="avatar" src="${escapeHTML(memberPhoto(b))}" alt="">
-            <h3>${escapeHTML(memberName(b))}</h3>
-            <p class="muted">${escapeHTML(b.platform || "")} ${escapeHTML(b.social_username || "")}</p>
-            <p><strong>${bv} votes</strong></p>
-          </div>
-        </div>
-        <p class="tag">${escapeHTML(battle.status.toUpperCase())}</p>
-        <p class="muted">Time: ${escapeHTML(timeText)}</p>
-        <div class="actions">${voteControls}</div>
-        ${adminControls}
-      </article>
-    `);
+  <article class="card battle-card">
+    <div class="battle-card-decoration">♌</div>
+
+    <h3 class="battle-match-title">
+      ⚔️ BATTLE MATCH
+    </h3>
+
+    <div class="battle-contestants">
+      <div class="battle-contestant">
+        <img class="avatar" src="${escapeHTML(memberPhoto(a))}" alt="">
+        <h3>${escapeHTML(memberName(a))}</h3>
+        <p class="muted">${escapeHTML(a.platform || "")} ${escapeHTML(a.social_username || "")}</p>
+        <p class="battle-votes">${av} Votes</p>
+      </div>
+
+      <div class="battle-vs">VS</div>
+
+      <div class="battle-contestant">
+        <img class="avatar" src="${escapeHTML(memberPhoto(b))}" alt="">
+        <h3>${escapeHTML(memberName(b))}</h3>
+        <p class="muted">${escapeHTML(b.platform || "")} ${escapeHTML(b.social_username || "")}</p>
+        <p class="battle-votes">${bv} Votes</p>
+      </div>
+    </div>
+
+    <div class="battle-status-row">
+      <span class="tag">${escapeHTML(battle.status.toUpperCase())}</span>
+      <span class="battle-time">⏳ ${escapeHTML(timeText)}</span>
+    </div>
+
+    <div class="actions battle-vote-controls">${voteControls}</div>
+    ${adminControls}
+  </article>
+`);
   }
 
   box.innerHTML = cards.join("") ||
