@@ -2592,7 +2592,120 @@ document.getElementById("scheduleRefreshButton").addEventListener("click",async(
   await loadVoteRefreshSettings();
 });
 document.querySelectorAll("[data-page]").forEach(btn=>btn.addEventListener("click",()=>{if(btn.dataset.page==="admin")loadAdmin();}));  
-  
+  async function loadMyEditableProfile() {
+  if (!currentUser) return;
+
+  const { data, error } = await sb
+    .from("members")
+    .select("id, user_id, owner_id, display_name, name, photo_url, social_username, social_link, bio")
+    .or(`user_id.eq.${currentUser.id},owner_id.eq.${currentUser.id}`)
+    .limit(1)
+    .maybeSingle();
+
+  if (error || !data) {
+    showMessage("editProfileMessage", "Your profile was not found.", true);
+    return;
+  }
+
+  window.myEditableMemberId = data.id;
+
+  $("editName").value = data.display_name || data.name || "";
+  $("editSocialUsername").value = data.social_username || "";
+  $("editSocialLink").value = data.social_link || "";
+  $("editBio").value = data.bio || "";
+}
+
+$("editProfileForm").addEventListener("submit", async function(e) {
+  e.preventDefault();
+
+  if (!currentUser || !window.myEditableMemberId) {
+    showMessage("editProfileMessage", "Please log in and reload your profile.", true);
+    return;
+  }
+
+  const name = $("editName").value.trim();
+  const username = $("editSocialUsername").value.trim();
+  const link = $("editSocialLink").value.trim();
+  const bio = $("editBio").value;
+  const photoFile = $("editPhoto").files[0];
+
+  if (!name || name.length > 10 || bio.length > 20) {
+    showMessage("editProfileMessage", "Name max 10 and bio max 20 characters.", true);
+    return;
+  }
+
+  const button = this.querySelector('button[type="submit"]');
+  button.disabled = true;
+  button.textContent = "Saving...";
+
+  try {
+    const { data: oldMember, error: oldError } = await sb
+      .from("members")
+      .select("photo_url")
+      .eq("id", window.myEditableMemberId)
+      .single();
+
+    if (oldError) throw oldError;
+
+    let photoUrl = oldMember.photo_url || "";
+
+    if (photoFile) {
+      const extension = photoFile.name.split(".").pop().toLowerCase();
+      const filePath = `${currentUser.id}/${Date.now()}.${extension}`;
+
+      const { error: uploadError } = await sb.storage
+        .from("member-photos")
+        .upload(filePath, photoFile, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: publicData } = sb.storage
+        .from("member-photos")
+        .getPublicUrl(filePath);
+
+      photoUrl = publicData.publicUrl;
+    }
+
+    const { data, error } = await sb.rpc("edit_member_profile", {
+      p_member_id: window.myEditableMemberId,
+      p_name: name,
+      p_photo_url: photoUrl,
+      p_social_username: username,
+      p_social_link: link,
+      p_bio: bio
+    });
+
+    if (error) throw error;
+
+    if (data !== "success") {
+      const messages = {
+        not_logged_in: "Please log in again.",
+        not_owner: "You cannot edit this profile.",
+        invalid_name: "Name must be 1–10 characters.",
+        invalid_bio: "Bio must be 20 characters or less.",
+        cooldown_name: "Name can only be changed once every 14 days.",
+        cooldown_photo: "Photo can only be changed once every 14 days.",
+        cooldown_social_username: "Username can only be changed once every 14 days.",
+        cooldown_social_link: "Social link can only be changed once every 14 days.",
+        cooldown_bio: "Bio can only be changed once every 24 hours."
+      };
+
+      throw new Error(messages[data] || data);
+    }
+
+    showMessage("editProfileMessage", "Profile updated successfully!", false);
+    $("editPhoto").value = "";
+
+    await loadMembers();
+    await loadMyEditableProfile();
+
+  } catch (error) {
+    showMessage("editProfileMessage", error.message || "Something went wrong.", true);
+  } finally {
+    button.disabled = false;
+    button.textContent = "Save Profile";
+  }
+});
 sb.auth.onAuthStateChange(async(_event,session)=>{  
   updateAuthUI(session?.user||null);  
   if(session?.user){  
