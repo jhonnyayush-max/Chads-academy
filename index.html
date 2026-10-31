@@ -1349,6 +1349,88 @@ button,
     width: 17px;
   }
   }
+  /* ===== FULL PAGE GREEK TEMPLE BACKGROUND ===== */
+
+body {
+  position: relative;
+  background:
+    radial-gradient(ellipse at 50% 35%, rgba(190,155,85,.13), transparent 48%),
+    linear-gradient(90deg, #090908, #17140e 50%, #090908) !important;
+  background-attachment: fixed !important;
+}
+
+/* Marble pillars on both sides */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: .22;
+  background:
+    /* Left pillar */
+    linear-gradient(90deg,
+      transparent 0 3%,
+      #b9a77e 3.2% 3.5%,
+      #514936 3.6% 4.4%,
+      #c7b58c 4.5% 5.5%,
+      #514936 5.6% 6.2%,
+      transparent 6.4% 100%),
+    /* Right pillar */
+    linear-gradient(90deg,
+      transparent 0 93.6%,
+      #c7b58c 93.8% 94.5%,
+      #514936 94.6% 95.4%,
+      #b9a77e 95.5% 96%,
+      transparent 96.2% 100%),
+    /* Pillar grooves */
+    repeating-linear-gradient(90deg,
+      transparent 0 20px,
+      rgba(210,190,145,.12) 21px 23px,
+      transparent 24px 29px);
+}
+
+/* Central marble statue-inspired silhouette */
+body::after {
+  content: "";
+  position: fixed;
+  z-index: 0;
+  pointer-events: none;
+  width: 250px;
+  height: 490px;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -45%);
+  opacity: .105;
+  background:
+    /* Head */
+    radial-gradient(ellipse at 50% 9%, #e8dfc9 0 8%, transparent 8.5%),
+    /* Shoulders and chest */
+    radial-gradient(ellipse at 50% 29%, #e8dfc9 0 25%, transparent 25.5%),
+    /* Waist */
+    linear-gradient(#e8dfc9, #e8dfc9) 37% 39% / 26% 25% no-repeat,
+    /* Draped cloth */
+    linear-gradient(145deg, transparent 35%, #e8dfc9 36% 68%, transparent 69%) 50% 72% / 70% 38% no-repeat;
+  filter: drop-shadow(0 0 18px rgba(220,190,125,.2));
+}
+
+/* Keep website content above background */
+body > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Mobile adjustment */
+@media (max-width: 600px) {
+  body::after {
+    width: 180px;
+    height: 380px;
+  }
+
+  body::before {
+    opacity: .15;
+  }
+}
   </style> 
 </head>  
 <body>  
