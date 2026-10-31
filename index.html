@@ -801,6 +801,70 @@ letter-spacing: 4px;
     max-width: 100%;
   }
 }
+  /* TOP 3: SAME VERTICAL DESIGN, LESS HEIGHT */
+.member-card.top-one,
+.member-card.top-two,
+.member-card.top-three,
+.member-card.potential-one,
+.member-card.potential-two,
+.member-card.potential-three {
+  grid-column: auto !important;
+  min-height: 0 !important;
+  height: auto !important;
+  padding: 10px !important;
+  transform: none !important;
+}
+
+.member-card.top-one .avatar,
+.member-card.top-two .avatar,
+.member-card.top-three .avatar,
+.member-card.potential-one .avatar,
+.member-card.potential-two .avatar,
+.member-card.potential-three .avatar {
+  width: 68px !important;
+  height: 68px !important;
+  aspect-ratio: 1 / 1 !important;
+  object-fit: cover !important;
+  flex-shrink: 0 !important;
+}
+
+/* TOP 3: HIDE BIO, KEEP VERTICAL LAYOUT */
+.member-card.top-one .bio,
+.member-card.top-two .bio,
+.member-card.top-three .bio,
+.member-card.potential-one .bio,
+.member-card.potential-two .bio,
+.member-card.potential-three .bio {
+  display: none !important;
+}
+
+/* OTHER MEMBERS: SLIM HORIZONTAL RECTANGLES */
+.member-card:not(.top-one):not(.top-two):not(.top-three):not(.potential-one):not(.potential-two):not(.potential-three) {
+  grid-column: 1 / -1 !important;
+  min-height: 0 !important;
+  height: auto !important;
+  padding: 7px 12px !important;
+}
+
+.member-card:not(.top-one):not(.top-two):not(.top-three):not(.potential-one):not(.potential-two):not(.potential-three) .member {
+  flex-direction: row !important;
+  align-items: center !important;
+  text-align: left !important;
+  gap: 12px !important;
+}
+
+.member-card:not(.top-one):not(.top-two):not(.top-three):not(.potential-one):not(.potential-two):not(.potential-three) .avatar {
+  width: 46px !important;
+  height: 46px !important;
+  aspect-ratio: 1 / 1 !important;
+  object-fit: cover !important;
+  flex-shrink: 0 !important;
+}
+
+/* HIDE BIO IN NORMAL MEMBER ROWS */
+.member-card:not(.top-one):not(.top-two):not(.top-three):not(.potential-one):not(.potential-two):not(.potential-three) .bio {
+  display: none !important;
+  }
   </style> 
 </head>  
 <body>  
