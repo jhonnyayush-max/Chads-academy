@@ -656,7 +656,7 @@ function memberCard(m, rank=null) {
     : `<button class="secondary" data-page="account">Login to vote</button>`;
 
   return `
-    <article class="card member-card ${rankClass}">
+    <article class="card member-card ${rankClass}" data-member-id="${escapeHTML(m.id)}">
       <div class="member">
         ${rank !== null ? `<div class="rank">#${rank}</div>` : ""}
         ${photo
