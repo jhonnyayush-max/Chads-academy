@@ -632,15 +632,46 @@ function memberCategory(m){return m.category ?? "chads"}
 function isApproved(m){return m.approved === true || m.status === "approved"}  
 function publicMembers(){return members.filter(isApproved)}  
 function sortedMembers(category){return publicMembers().filter(m=>memberCategory(m)===category).sort((a,b)=>memberScore(b)-memberScore(a))}  
-function memberCard(m, rank=null) {  
-  const photo = memberPhoto(m);  
-  const social = escapeHTML(m.social_username ?? m.social ?? "");  
-  const platform = escapeHTML(m.platform ?? "");  
-  const link = safeHttpUrl(m.social_link ?? m.link ?? "");  
-  const bio = escapeHTML(m.bio ?? "");  
-  const voteButton = currentUser ? `<button class="primary voteBtn" data-id="${escapeHTML(m.id)}">▲ Vote (${memberScore(m)})</button>` : `<button class="secondary" data-page="account">Login to vote</button>`;  
-  return `<article class="card"><div class="member">${rank!==null?`<div class="rank">#${rank}</div>`:""}<img class="avatar" src="${escapeHTML(photo)}" alt="" onerror="this.style.visibility='hidden'"><div style="min-width:0"><h3>${escapeHTML(memberName(m))}</h3><span class="tag">${escapeHTML(memberCategory(m)==="potential"?"HTN & Potential":"Chads Ranking")}</span><span class="tag">${platform}</span><p class="muted">${social}</p><p>${bio}</p><p class="small">${memberScore(m)} vote(s)</p><div class="actions">${voteButton}${link?`<a class="secondary" href="${escapeHTML(link)}" target="_blank" rel="noopener noreferrer">Social profile ↗</a>`:""}</div></div></div></article>`;  
-}  
+function memberCard(m, rank=null) {
+  const photo = memberPhoto(m);
+  const social = escapeHTML(m.social_username ?? m.social ?? "");
+  const platform = escapeHTML(m.platform ?? "");
+  const link = safeHttpUrl(m.social_link ?? m.link ?? "");
+  const bio = escapeHTML(m.bio ?? "");
+  const category = memberCategory(m);
+
+  let rankClass = "";
+  if (rank === 1) rankClass = category === "potential" ? "potential-one" : "top-one";
+  else if (rank === 2) rankClass = category === "potential" ? "potential-two" : "top-two";
+  else if (rank === 3) rankClass = category === "potential" ? "potential-three" : "top-three";
+
+  const voteButton = currentUser
+    ? `<button class="primary voteBtn" data-id="${escapeHTML(m.id)}">▲ Vote (${memberScore(m)})</button>`
+    : `<button class="secondary" data-page="account">Login to vote</button>`;
+
+  return `
+    <article class="card member-card ${rankClass}">
+      <div class="member">
+        ${rank !== null ? `<div class="rank">#${rank}</div>` : ""}
+        ${photo
+          ? `<img class="avatar" src="${escapeHTML(photo)}" alt="" onerror="this.style.visibility='hidden'">`
+          : `<div class="avatar avatar-placeholder">♛</div>`
+        }
+        <div class="member-info" style="min-width:0">
+          <h3>${escapeHTML(memberName(m))}</h3>
+          <span class="tag">${escapeHTML(category === "potential" ? "HTN & Potential" : "Chads Ranking")}</span>
+          ${platform ? `<span class="tag">${platform}</span>` : ""}
+          ${social ? `<p class="muted">${social}</p>` : ""}
+          ${bio ? `<p>${bio}</p>` : ""}
+          <p class="small">${memberScore(m)} vote(s)</p>
+          <div class="actions">
+            ${voteButton}
+            ${link ? `<a class="secondary" href="${escapeHTML(link)}" target="_blank" rel="noopener noreferrer">Social profile ↗</a>` : ""}
+          </div>
+        </div>
+      </div>
+    </article>`;
+ }
 function attachVoteButtons(){  
   document.querySelectorAll(".voteBtn").forEach(btn=>btn.addEventListener("click",()=>castVote(btn.dataset.id)));  
   document.querySelectorAll("[data-page='account']").forEach(btn=>btn.addEventListener("click",()=>showPage("account")));  
