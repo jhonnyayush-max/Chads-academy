@@ -627,7 +627,9 @@ function showPage(id) {
   }
   if (id === "admin") loadAdmin();  
 }  
-document.querySelectorAll("[data-page]").forEach(btn => btn.addEventListener("click", () => showPage(btn.dataset.page)));  
+document.querySelectorAll("[data-page]").forEach $("backToRankings").addEventListener("click", () => {
+  showPage("rankings");
+}); (btn => btn.addEventListener("click", () => showPage(btn.dataset.page)));  
 document.querySelectorAll(".categoryBtn").forEach(btn => btn.addEventListener("click", () => {  
   currentCategory = btn.dataset.category; renderRankings();  
 }));  
