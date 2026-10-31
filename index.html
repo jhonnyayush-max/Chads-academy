@@ -723,6 +723,84 @@ height: 78px;
 letter-spacing: 4px;
 }
 }
+  /* TOP 3 PODIUM DESIGN */
+#rankList,
+.home-ranking .grid {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 14px !important;
+  align-items: stretch;
+}
+
+/* Rank positions */
+.member-card.top-one,
+.member-card.potential-one {
+  grid-column: 2 !important;
+  grid-row: 1 !important;
+  transform: scale(1.04);
+}
+
+.member-card.top-two,
+.member-card.potential-two {
+  grid-column: 1 !important;
+  grid-row: 1 !important;
+}
+
+.member-card.top-three,
+.member-card.potential-three {
+  grid-column: 3 !important;
+  grid-row: 1 !important;
+}
+
+/* Top 3 profile shape */
+.member-card.top-one .member,
+.member-card.top-two .member,
+.member-card.top-three .member,
+.member-card.potential-one .member,
+.member-card.potential-two .member,
+.member-card.potential-three .member {
+  flex-direction: column !important;
+  text-align: center !important;
+  align-items: center !important;
+}
+
+/* Remaining members: compact rectangular rows */
+.member-card:not(.top-one):not(.top-two):not(.top-three):not(.potential-one):not(.potential-two):not(.potential-three) {
+  grid-column: 1 / -1 !important;
+  padding: 10px 14px !important;
+  min-height: 0 !important;
+}
+
+.member-card:not(.top-one):not(.top-two):not(.top-three):not(.potential-one):not(.potential-two):not(.potential-three) .member {
+  flex-direction: row !important;
+  text-align: left !important;
+  align-items: center !important;
+  gap: 12px !important;
+}
+
+.member-card:not(.top-one):not(.top-two):not(.top-three):not(.potential-one):not(.potential-two):not(.potential-three) .avatar {
+  width: 48px !important;
+  height: 48px !important;
+  flex-shrink: 0 !important;
+}
+
+/* Mobile layout */
+@media (max-width: 600px) {
+  #rankList,
+  .home-ranking .grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 7px !important;
+  }
+
+  .member-card.top-one,
+  .member-card.potential-one {
+    transform: none;
+  }
+
+  .member-card .avatar {
+    max-width: 100%;
+  }
+}
   </style> 
 </head>  
 <body>  
