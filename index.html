@@ -1612,6 +1612,28 @@ body > * {
 </section>  <section id="admin" class="page hidden">  
   <h1 class="page-title">🛡️ Admin Panel</h1>  
   <div class="panel"><p class="muted">Review pending applications. Approving makes the profile public; rejecting leaves it out of rankings.</p><button class="secondary" id="refreshAdmin">Refresh applications</button></div>  
+ <div class="panel" id="voteRefreshPanel">
+  <h2>🔄 Vote Refresh Settings</h2>
+  <p class="muted">Schedule the next voting cycle refresh.</p>
+
+  <p id="currentRefreshInfo">Loading refresh information...</p>
+
+  <label for="refreshInterval">Choose refresh period:</label>
+  <select id="refreshInterval">
+    <option value="">Select period</option>
+    <option value="24h">24 Hours</option>
+    <option value="2d">2 Days</option>
+    <option value="7d">7 Days</option>
+    <option value="14d">14 Days</option>
+    <option value="1m">1 Month</option>
+  </select>
+
+  <button class="primary" id="scheduleRefreshButton" type="button">
+    Schedule Refresh
+  </button>
+
+  <p id="refreshScheduleMessage" class="status hidden"></p>
+ </div>
   <div id="adminList" class="grid"><div class="empty">Loading…</div></div>  
   <h2>Manage Chad List</h2>
 <div id="manageMembers" class="grid"></div>
