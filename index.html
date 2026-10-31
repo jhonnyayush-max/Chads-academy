@@ -1026,6 +1026,143 @@ letter-spacing: 4px;
     height: 78px !important;
   }
  }
+  /* BATTLES - LUXURY GREEK DESIGN */
+
+#battles > .page-title {
+  text-align: center;
+  color: #f5c542 !important;
+  font-size: clamp(38px, 7vw, 64px) !important;
+  font-weight: 1000 !important;
+  letter-spacing: 7px;
+  padding: 30px 10px;
+  background:
+    linear-gradient(90deg, transparent, rgba(218,165,32,.12), transparent);
+  border-bottom: 1px solid rgba(245,197,66,.35);
+  text-shadow: 0 2px 15px rgba(218,165,32,.2);
+}
+
+.battle-card {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(145deg, #191714, #090909) !important;
+  border: 1px solid rgba(218,165,32,.45) !important;
+  border-radius: 18px !important;
+  padding: 22px !important;
+  margin-bottom: 22px !important;
+}
+
+.battle-card-decoration {
+  position: absolute;
+  right: 12px;
+  top: 5px;
+  font-size: 100px;
+  opacity: .055;
+  pointer-events: none;
+}
+
+.battle-match-title {
+  text-align: center;
+  color: #f5c542 !important;
+  font-size: 23px;
+  letter-spacing: 3px;
+  margin-bottom: 25px;
+}
+
+.battle-contestants {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+}
+
+.battle-contestant {
+  min-width: 0;
+  padding: 12px 5px;
+  background: rgba(255,255,255,.025);
+  border: 1px solid rgba(245,197,66,.15);
+  border-radius: 15px;
+}
+
+.battle-contestant .avatar {
+  width: 85px !important;
+  height: 85px !important;
+  border-radius: 50% !important;
+  object-fit: cover !important;
+  border: 2px solid #d9aa35;
+  margin: 0 auto 10px;
+}
+
+.battle-contestant h3 {
+  color: #f5c542 !important;
+  font-size: 16px;
+  overflow-wrap: anywhere;
+}
+
+.battle-contestant .muted {
+  font-size: 11px;
+  overflow-wrap: anywhere;
+}
+
+.battle-vs {
+  color: #f5c542;
+  font-size: 27px;
+  font-weight: 1000;
+  text-shadow: 0 0 12px rgba(245,197,66,.25);
+}
+
+.battle-votes {
+  color: #fff;
+  font-weight: 800;
+}
+
+.battle-status-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin: 20px 0;
+  flex-wrap: wrap;
+}
+
+.battle-time {
+  color: #e8c66a;
+  font-weight: 700;
+}
+
+.battle-vote-controls {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.battle-card .actions button {
+  border-radius: 10px;
+}
+
+@media(max-width:500px) {
+  .battle-card {
+    padding: 13px !important;
+  }
+
+  .battle-contestants {
+    gap: 5px;
+  }
+
+  .battle-contestant .avatar {
+    width: 65px !important;
+    height: 65px !important;
+  }
+
+  .battle-contestant h3 {
+    font-size: 13px;
+  }
+
+  .battle-vs {
+    font-size: 21px;
+  }
+ }
   </style> 
 </head>  
 <body>  
