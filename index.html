@@ -1328,7 +1328,7 @@ function memberCard(m, rank=null) {
   else if (rank === 3) rankClass = category === "potential" ? "potential-three" : "top-three";
 
   const voteButton = currentUser
-    ? `<button class="primary voteBtn" data-id="${escapeHTML(m.id)}">▲ VOTE (${memberScore(m)})</button>`
+    ? `<button class="primary voteBtn" data-id="${escapeHTML(m.id)}">▲ VOTE</button>`
     : `<button class="secondary" data-page="account">Login to vote</button>`;
 
   return `
