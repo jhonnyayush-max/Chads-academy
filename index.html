@@ -2717,7 +2717,11 @@ sb.auth.onAuthStateChange(async(_event,session)=>{
   const {data,error}=await sb.auth.getSession();  
   if(error)showMessage("loginMessage",error.message,true);  
   updateAuthUI(data?.session?.user||null);  
-  if(data?.session?.user){await refreshRole(data.session.user);await loadVoteHistory();}  
+  if(data?.session?.user){
+  await refreshRole(data.session.user);
+  await loadVoteHistory();
+  await loadMyEditableProfile();
+  }
   await loadMembers();  
   // Pending count is visible to admins only.  
   if(currentRole==="admin")await loadAdmin(); 
