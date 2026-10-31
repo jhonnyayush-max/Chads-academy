@@ -2470,7 +2470,105 @@ if(error)return alert("Could not update application: "+error.message);
 await loadAdmin();
 await loadMembers();
 }
-$("refreshAdmin").addEventListener("click",loadAdmin);  
+$("refreshAdmin").addEventListener("click",loadAdmin); 
+ async function loadVoteRefreshSettings(){
+  const panel = document.getElementById("voteRefreshPanel");
+  if(currentRole !== "admin"){
+    panel.classList.add("hidden");
+    return;
+  }
+
+  panel.classList.remove("hidden");
+
+  const info = document.getElementById("currentRefreshInfo");
+  const select = document.getElementById("refreshInterval");
+  const message = document.getElementById("refreshScheduleMessage");
+
+  const {data,error} = await sb
+    .from("vote_refresh_settings")
+    .select("activated_at,next_refresh_at,interval_key")
+    .eq("id",true)
+    .single();
+
+  if(error){
+    info.textContent = "Could not load refresh settings.";
+    return;
+  }
+
+  const lastRefresh = new Date(data.activated_at);
+  const now = new Date();
+
+  info.textContent = "Last refresh: " + lastRefresh.toLocaleString() +
+    (data.next_refresh_at
+      ? " | Next refresh: " + new Date(data.next_refresh_at).toLocaleString()
+      : " | No refresh scheduled");
+
+  const options = [
+    {value:"24h",label:"24 Hours",days:1},
+    {value:"2d",label:"2 Days",days:2},
+    {value:"7d",label:"7 Days",days:7},
+    {value:"14d",label:"14 Days",days:14},
+    {value:"1m",label:"1 Month",days:null}
+  ];
+
+  [...select.options].forEach(option=>{
+    if(!option.value)return;
+    option.hidden = true;
+    option.disabled = true;
+  });
+
+  options.forEach(item=>{
+    const elapsed = item.days !== null
+      ? now - lastRefresh >= item.days * 86400000
+      : now >= new Date(new Date(lastRefresh).setMonth(lastRefresh.getMonth()+1));
+
+    const option = [...select.options].find(o=>o.value===item.value);
+    if(option){
+      option.hidden = elapsed;
+      option.disabled = elapsed;
+    }
+  });
+
+  select.value = "";
+  message.classList.add("hidden");
+}
+
+document.getElementById("scheduleRefreshButton").addEventListener("click",async()=>{
+  const select = document.getElementById("refreshInterval");
+  const message = document.getElementById("refreshScheduleMessage");
+  const value = select.value;
+
+  if(!value)return alert("Please select a refresh period.");
+
+  const labels = {
+    "24h":"24 Hours",
+    "2d":"2 Days",
+    "7d":"7 Days",
+    "14d":"14 Days",
+    "1m":"1 Month"
+  };
+
+  if(!confirm("Schedule vote refresh after "+labels[value]+" from the last actual refresh?"))return;
+
+  const button = document.getElementById("scheduleRefreshButton");
+  button.disabled = true;
+
+  const {error} = await sb.rpc("schedule_vote_refresh",{
+    p_interval_key:value
+  });
+
+  button.disabled = false;
+
+  if(error){
+    alert("Could not schedule refresh: "+error.message);
+    return;
+  }
+
+  message.textContent = "Refresh schedule saved successfully!";
+  message.classList.remove("hidden");
+
+  await loadVoteRefreshSettings();
+});
 document.querySelectorAll("[data-page]").forEach(btn=>btn.addEventListener("click",()=>{if(btn.dataset.page==="admin")loadAdmin();}));  
   
 sb.auth.onAuthStateChange(async(_event,session)=>{  
