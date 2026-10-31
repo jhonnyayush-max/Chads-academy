@@ -386,19 +386,45 @@ footer {
   </nav>  
 </header>  
 <main>  
-<section id="home" class="page">  
-  <div class="hero">  
-    <span class="tag">COMMUNITY RANKING PLATFORM</span>  
-    <h1>WELCOME TO<br><span>CHAD ACADEMY</span></h1>  
-    <p class="muted">Discover profiles, vote for approved members, and apply to join the rankings.</p>  
-    <div class="actions"><button class="primary" data-page="rankings">Explore Rankings</button><button class="secondary" data-page="join">Apply for Ranking</button></div>  
-  </div>  
-  <div class="grid">  
-    <div class="panel"><h2 id="memberTotal">—</h2><p class="muted">Approved profiles</p></div>  
-    <div class="panel"><h2 id="voteTotal">—</h2><p class="muted">Community votes</p></div>  
-    <div class="panel"><h2 id="applicationTotal">—</h2><p class="muted">Pending applications (admin)</p></div>  
-  </div>  
-  <h2>Top Ranked</h2><div id="homeTop" class="grid"><div class="empty">Loading rankings…</div></div>  
+<section id="home" class="page">
+  <div class="hero">
+    <span class="tag">THE CLASSICAL RANKING SOCIETY</span>
+    <h1>WELCOME TO<br><span>CHAD ACADEMY</span></h1>
+    <p class="muted">A community built around profiles, rankings and fair voting.</p>
+    <div class="actions">
+      <button class="primary" data-page="rankings">Explore Rankings</button>
+      <button class="secondary" data-page="join">Apply for Ranking</button>
+    </div>
+  </div>
+
+  <div id="adminHomeStats" class="grid hidden">
+    <div class="panel">
+      <h2 id="memberTotal">—</h2>
+      <p class="muted">Approved profiles</p>
+    </div>
+    <div class="panel">
+      <h2 id="voteTotal">—</h2>
+      <p class="muted">Total votes</p>
+    </div>
+    <div class="panel">
+      <h2 id="applicationTotal">—</h2>
+      <p class="muted">Pending applications</p>
+    </div>
+  </div>
+
+  <section class="home-ranking">
+    <h2>♛ Chads Ranking</h2>
+    <div id="homeChadsTop" class="grid">
+      <div class="empty">Loading…</div>
+    </div>
+  </section>
+
+  <section class="home-ranking">
+    <h2>✦ HTN &amp; Potential</h2>
+    <div id="homePotentialTop" class="grid">
+      <div class="empty">Loading…</div>
+    </div>
+  </section>
 </section>  <section id="rankings" class="page hidden">  
   <h1 class="page-title">🏆 Rankings</h1>  
   <div class="panel">  
