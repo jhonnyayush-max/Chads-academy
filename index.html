@@ -646,12 +646,28 @@ function renderRankings(){
   $("rankList").innerHTML=list.length?list.map((m,i)=>memberCard(m,i+1)).join(""):`<div class="panel empty">No approved profiles in this category yet.</div>`;  
   attachVoteButtons();  
 }  
-function renderAll(){  
-  $("memberTotal").textContent=publicMembers().length;  
-  $("voteTotal").textContent=publicMembers().reduce((n,m)=>n+memberScore(m),0);  
-  $("homeTop").innerHTML=sortedMembers("chads").slice(0,3).map((m,i)=>memberCard(m,i+1)).join("")||`<div class="panel empty">No approved profiles yet. Be the first to apply.</div>`;  
-  renderRankings(); fillBattleSelects();  
-}  
+function renderAll(){
+  const approved = publicMembers();
+
+  $("memberTotal").textContent = approved.length;
+  $("voteTotal").textContent = approved.reduce((n,m)=>n+memberScore(m),0);
+
+  const stats = $("adminHomeStats");
+  if(stats) stats.classList.toggle("hidden", currentRole !== "admin");
+
+  $("homeChadsTop").innerHTML =
+    sortedMembers("chads").slice(0,3)
+      .map((m,i)=>memberCard(m,i+1)).join("") ||
+    `<div class="panel empty">No approved Chads yet.</div>`;
+
+  $("homePotentialTop").innerHTML =
+    sortedMembers("potential").slice(0,3)
+      .map((m,i)=>memberCard(m,i+1)).join("") ||
+    `<div class="panel empty">No approved profiles yet.</div>`;
+
+  renderRankings();
+  fillBattleSelects();
+ } 
 async function loadVoteHistory(){
     if(!currentUser){
         votedIds = new Set();
