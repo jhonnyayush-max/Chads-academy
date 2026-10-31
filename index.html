@@ -921,6 +921,111 @@ letter-spacing: 4px;
   font-weight: 800 !important;
   font-size: 18px !important;
 }
+  /* TOP 3: VERTICAL PROFILE CARDS */
+.member-card.top-one,
+.member-card.top-two,
+.member-card.top-three,
+.member-card.potential-one,
+.member-card.potential-two,
+.member-card.potential-three {
+  grid-column: auto !important;
+  height: 290px !important;
+  min-height: 290px !important;
+  padding: 16px !important;
+}
+
+.member-card.top-one .member,
+.member-card.top-two .member,
+.member-card.top-three .member,
+.member-card.potential-one .member,
+.member-card.potential-two .member,
+.member-card.potential-three .member {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  gap: 12px !important;
+}
+
+.member-card.top-one .avatar,
+.member-card.top-two .avatar,
+.member-card.top-three .avatar,
+.member-card.potential-one .avatar,
+.member-card.potential-two .avatar,
+.member-card.potential-three .avatar {
+  width: 100px !important;
+  height: 100px !important;
+  border-radius: 50% !important;
+  object-fit: cover !important;
+}
+
+/* NORMAL MEMBERS: HORIZONTAL ROWS */
+.member-card:not(.top-one):not(.top-two):not(.top-three):not(.potential-one):not(.potential-two):not(.potential-three) {
+  grid-column: 1 / -1 !important;
+  height: 76px !important;
+  min-height: 76px !important;
+  padding: 8px 14px !important;
+}
+
+.member-card:not(.top-one):not(.top-two):not(.top-three):not(.potential-one):not(.potential-two):not(.potential-three) .member {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 16px !important;
+}
+
+.member-card:not(.top-one):not(.top-two):not(.top-three):not(.potential-one):not(.potential-two):not(.potential-three) .avatar {
+  width: 52px !important;
+  height: 52px !important;
+  border-radius: 50% !important;
+  object-fit: cover !important;
+  flex-shrink: 0 !important;
+}
+
+/* NAME */
+.member-card .member-info {
+  min-width: 0 !important;
+}
+
+.member-card .member-info h3 {
+  color: #f5c542 !important;
+  font-weight: 900 !important;
+  margin: 0 0 8px !important;
+}
+
+/* VOTE BUTTON */
+.member-card .voteBtn,
+.member-card .actions button {
+  background: linear-gradient(135deg, #ffe36b, #d99a00) !important;
+  color: #171000 !important;
+  font-weight: 900 !important;
+  border: 1px solid #ffdf65 !important;
+  border-radius: 12px !important;
+}
+
+/* MOBILE */
+@media(max-width:600px) {
+  .member-card.top-one,
+  .member-card.top-two,
+  .member-card.top-three,
+  .member-card.potential-one,
+  .member-card.potential-two,
+  .member-card.potential-three {
+    height: 245px !important;
+    min-height: 245px !important;
+  }
+
+  .member-card.top-one .avatar,
+  .member-card.top-two .avatar,
+  .member-card.top-three .avatar,
+  .member-card.potential-one .avatar,
+  .member-card.potential-two .avatar,
+  .member-card.potential-three .avatar {
+    width: 78px !important;
+    height: 78px !important;
+  }
+ }
   </style> 
 </head>  
 <body>  
