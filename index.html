@@ -1237,8 +1237,7 @@ function memberCard(m, rank=null) {
         <div class="member-info" style="min-width:0">
           <h3>${escapeHTML(memberName(m))}</h3>
           <span class="tag">${escapeHTML(category === "potential" ? "HTN & Potential" : "Chads Ranking")}</span>
-          ${platform ? `<span class="tag">${platform}</span>` : ""}
-          ${social ? `<p class="muted">${social}</p>` : ""}
+          
         
           <p class="small">${memberScore(m)} vote(s)</p>
           <div class="actions">
