@@ -865,6 +865,58 @@ letter-spacing: 4px;
 .member-card:not(.top-one):not(.top-two):not(.top-three):not(.potential-one):not(.potential-two):not(.potential-three) .bio {
   display: none !important;
   }
+  /* TOP 3: SHORTER VERTICAL RECTANGLES */
+.member-card.top-one,
+.member-card.top-two,
+.member-card.top-three,
+.member-card.potential-one,
+.member-card.potential-two,
+.member-card.potential-three {
+  height: 185px !important;
+  min-height: 185px !important;
+  aspect-ratio: auto !important;
+  overflow: hidden !important;
+  padding: 8px !important;
+}
+
+.member-card.top-one .avatar,
+.member-card.top-two .avatar,
+.member-card.top-three .avatar,
+.member-card.potential-one .avatar,
+.member-card.potential-two .avatar,
+.member-card.potential-three .avatar {
+  width: 58px !important;
+  height: 58px !important;
+}
+
+/* NORMAL MEMBERS: FULL-WIDTH SLIM RECTANGLES */
+.member-card:not(.top-one):not(.top-two):not(.top-three):not(.potential-one):not(.potential-two):not(.potential-three) {
+  grid-column: 1 / -1 !important;
+  display: flex !important;
+  width: 100% !important;
+  height: 72px !important;
+  min-height: 72px !important;
+  aspect-ratio: auto !important;
+  padding: 7px 12px !important;
+  overflow: hidden !important;
+}
+
+.member-card:not(.top-one):not(.top-two):not(.top-three):not(.potential-one):not(.potential-two):not(.potential-three) .member {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  width: 100% !important;
+  height: 100% !important;
+  text-align: left !important;
+  gap: 12px !important;
+}
+
+.member-card:not(.top-one):not(.top-two):not(.top-three):not(.potential-one):not(.potential-two):not(.potential-three) .avatar {
+  width: 48px !important;
+  height: 48px !important;
+  flex: 0 0 48px !important;
+  aspect-ratio: 1 / 1 !important;
+}
   </style> 
 </head>  
 <body>  
