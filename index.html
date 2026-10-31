@@ -2585,7 +2585,8 @@ sb.auth.onAuthStateChange(async(_event,session)=>{
   if(data?.session?.user){await refreshRole(data.session.user);await loadVoteHistory();}  
   await loadMembers();  
   // Pending count is visible to admins only.  
-  if(currentRole==="admin")await loadAdmin();  
+  if(currentRole==="admin")await loadAdmin(); 
+ if(currentRole==="admin")await loadVoteRefreshSettings();
 })();  
 </script>  </body>  
 </html>  
