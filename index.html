@@ -997,11 +997,11 @@ letter-spacing: 4px;
 /* Make current-cycle votes the main visible vote figure */
 .current-votes {
   display: block;
-  margin: 9px 0 2px;
+  margin: 6px 0 2px;
   color: var(--gold-light);
-  font-size: 20px;
-  line-height: 1.2;
-  font-weight: 900;
+  font-size: 14px;
+  line-height: 1.25;
+  font-weight: 600;
 }
 .lifetime-votes {
   display: block;
@@ -1012,10 +1012,10 @@ letter-spacing: 4px;
   font-weight: 400;
 }
 .profile-current-votes {
-  margin: 12px 0 4px;
+  margin: 8px 0 4px;
   color: var(--gold-light);
-  font-size: 25px;
-  font-weight: 900;
+  font-size: 17px;
+  font-weight: 600;
 }
 .profile-lifetime-votes {
   margin: 2px 0 10px;
@@ -1893,6 +1893,15 @@ document.querySelectorAll(".home-category-btn").forEach(btn => {
     renderHomeCategoryStats(category);
   });
 });
+function withRequestTimeout(promise, label, ms = 12000) {
+  let timer;
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => {
+      timer = setTimeout(() => reject(new Error(label + " timed out. Please check your connection and try again.")), ms);
+    })
+  ]).finally(() => clearTimeout(timer));
+}
 function memberScore(m){return Number(m.vote_count ?? m.voteCount ?? m.score ?? 0)}
 function cycleScore(m){return Number(m.cycle_vote_count ?? 0)}
 function memberName(m){return m.display_name ?? m.name ?? "Unnamed member"}
@@ -2628,13 +2637,32 @@ if (!name || !photoFile || !social || !platform || !bio) {
   showMessage("joinMessage", "Application submitted! It will appear publicly after admin approval.");
   await loadMembers();
 });
-async function refreshRole(user){  
-  currentRole="user";  
-  if(!user)return;  
-  const {data,error}=await sb.from("user_profiles").select("*").eq("user_id",user.id).maybeSingle();
-  if(!error&&data)currentRole=data.role||"user";  
-  $("adminNav").classList.toggle("hidden",currentRole!=="admin");  
-  $("roleLabel").textContent=currentRole==="admin"?"Administrator access enabled.":"Member account";  
+async function refreshRole(user){
+  currentRole="user";
+  if(!user){
+    $("adminNav").classList.add("hidden");
+    $("roleLabel").textContent="Member account";
+    return;
+  }
+  try {
+    const result = await withRequestTimeout(
+      sb.from("user_profiles").select("role").eq("user_id",user.id).maybeSingle(),
+      "Admin permission check"
+    );
+    if(result.error) throw result.error;
+    currentRole = result.data?.role || "user";
+    $("adminNav").classList.toggle("hidden",currentRole!=="admin");
+    $("roleLabel").textContent = currentRole==="admin"
+      ? "Administrator access enabled."
+      : "Member account";
+    window.adminRoleLoadError = null;
+  } catch(error) {
+    currentRole="user";
+    $("adminNav").classList.add("hidden");
+    $("roleLabel").textContent="Could not verify admin access: "+(error.message||"Unknown error");
+    window.adminRoleLoadError=error.message||"Admin permission check failed";
+    console.error("Admin role lookup failed:",error);
+  }
 }  
 function updateAuthUI(user){  
   currentUser=user||null;  
@@ -2671,7 +2699,15 @@ async function loadManageMembers(){
     return;
   }
 
-  const {data,error}=await sb.from("members").select("*");
+  let result;
+  try {
+    result = await withRequestTimeout(sb.from("members").select("*"), "Manage Chad List request");
+  } catch(requestError) {
+    box.innerHTML = `<div class="panel">Could not load members: ${escapeHTML(requestError.message || "Network error")}</div>`;
+    console.error("Manage Chad List request failed:", requestError);
+    return;
+  }
+  const {data,error}=result;
 
   if(error){
     box.innerHTML=
@@ -2776,16 +2812,24 @@ $("manageMembers").innerHTML = "";
 return;
 }
 
-const {data,error} = await sb
-.from("members")
-.select("*")
-.eq("status","pending")
-.order("created_at",{ascending:false});
+let pendingResult;
+try {
+  pendingResult = await withRequestTimeout(
+    sb.from("members").select("*").eq("status","pending").order("created_at",{ascending:false}),
+    "Admin applications request"
+  );
+} catch(requestError) {
+  $("adminList").innerHTML = `<div class="panel">Could not load applications: ${escapeHTML(requestError.message || "Network error")}</div>`;
+  console.error("Admin applications request failed:", requestError);
+  await loadManageMembers();
+  return;
+}
+const {data,error} = pendingResult;
 
 if(error){
-$("adminList").innerHTML =
-`<div class="panel">Could not load applications: ${escapeHTML(error.message)}</div>`;
-return;
+  $("adminList").innerHTML = `<div class="panel">Could not load applications: ${escapeHTML(error.message)}</div>`;
+  await loadManageMembers();
+  return;
 }
 
 $("applicationTotal").textContent = (data || []).length;
@@ -3109,4 +3153,3 @@ sb.auth.onAuthStateChange(async(_event,session)=>{
 })();  
 </script>  </body>  
 </html>  
- 
