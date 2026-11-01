@@ -2020,15 +2020,18 @@ async function syncPersistentRankMovement() {
     }
   }
 
-  const { data: rows, error } = await sb.from("rank_movement")
-    .select("member_id, category, initial_rank, current_rank, delta")
-    .eq("cycle_key", movementCycleKey);
+  const { data: allRows, error } = await sb.from("rank_movement")
+  .select("cycle_key, member_id, category, initial_rank, current_rank, delta");
 
-  if (error) {
-    console.error("Movement load failed:", error.message);
-    window.rankMovementLoadError = error.message;
-    return;
-  }
+if (error) {
+  console.error("Movement load failed:", error.message);
+  window.rankMovementLoadError = error.message;
+  return;
+}
+
+const rows = (allRows || []).filter(row =>
+  Date.parse(row.cycle_key) === Date.parse(movementCycleKey)
+);
 
   rankMovementById = new Map();
   (rows || []).forEach(row => {
