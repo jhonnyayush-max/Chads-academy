@@ -1517,7 +1517,7 @@ body > * {
     </div>
   </div>
 
-  <div id="adminHomeStats" class="grid hidden">
+  <div id="homeCategoryStats" class="grid">
     <div class="panel">
       <h2 id="memberTotal">—</h2>
       <p class="muted">Approved profiles</p>
@@ -1525,10 +1525,6 @@ body > * {
     <div class="panel">
       <h2 id="voteTotal">—</h2>
       <p class="muted">Total votes</p>
-    </div>
-    <div class="panel">
-      <h2 id="applicationTotal">—</h2>
-      <p class="muted">Pending applications</p>
     </div>
   </div>
 
@@ -1545,27 +1541,27 @@ body > * {
   <div id="homeChadsTop" class="grid">
     <div class="empty">Loading…</div>
   </div>
+  <div class="movement-category-group">
+    <h2 class="movement-category-title">♛ Chads Ranking — Rank Movement</h2>
+    <div class="movement-panels">
+      <section class="panel movement-panel"><h3>📈 Biggest Rises</h3><div id="biggestRisesChads" class="movement-list"><p class="muted">Loading…</p></div></section>
+      <section class="panel movement-panel"><h3>📉 Biggest Drops</h3><div id="biggestDropsChads" class="movement-list"><p class="muted">Loading…</p></div></section>
+    </div>
+  </div>
 </section>
 
 <section class="home-ranking hidden" id="homePotentialSection">
   <div id="homePotentialTop" class="grid">
     <div class="empty">Loading…</div>
   </div>
+  <div class="movement-category-group">
+    <h2 class="movement-category-title">✦ HTN &amp; Potential — Rank Movement</h2>
+    <div class="movement-panels">
+      <section class="panel movement-panel"><h3>📈 Biggest Rises</h3><div id="biggestRisesPotential" class="movement-list"><p class="muted">Loading…</p></div></section>
+      <section class="panel movement-panel"><h3>📉 Biggest Drops</h3><div id="biggestDropsPotential" class="movement-list"><p class="muted">Loading…</p></div></section>
+    </div>
+  </div>
 </section>
-<div class="movement-category-group">
-  <h2 class="movement-category-title">♛ Chads Ranking — Rank Movement</h2>
-  <div class="movement-panels">
-    <section class="panel movement-panel"><h3>📈 Biggest Rises</h3><div id="biggestRisesChads" class="movement-list"><p class="muted">Loading…</p></div></section>
-    <section class="panel movement-panel"><h3>📉 Biggest Drops</h3><div id="biggestDropsChads" class="movement-list"><p class="muted">Loading…</p></div></section>
-  </div>
-</div>
-<div class="movement-category-group">
-  <h2 class="movement-category-title">✦ HTN &amp; Potential — Rank Movement</h2>
-  <div class="movement-panels">
-    <section class="panel movement-panel"><h3>📈 Biggest Rises</h3><div id="biggestRisesPotential" class="movement-list"><p class="muted">Loading…</p></div></section>
-    <section class="panel movement-panel"><h3>📉 Biggest Drops</h3><div id="biggestDropsPotential" class="movement-list"><p class="muted">Loading…</p></div></section>
-  </div>
-</div>
 </section>  <section id="rankings" class="page hidden">
   <div class="ranking-header">
     <span class="tag">THE HALL OF RANKINGS</span>
@@ -1889,16 +1885,18 @@ document.querySelectorAll(".categoryBtn").forEach(btn =>
     renderRankings();
   })
 );
- document.querySelectorAll(".home-category-btn").forEach(btn => {
+ function renderHomeCategoryStats(category) {
+  const approved = publicMembers().filter(m => memberCategory(m) === category);
+  $("memberTotal").textContent = approved.length.toLocaleString();
+  $("voteTotal").textContent = approved.reduce((n,m) => n + memberScore(m), 0).toLocaleString();
+}
+document.querySelectorAll(".home-category-btn").forEach(btn => {
   btn.addEventListener("click", () => {
     const category = btn.dataset.homeCategory;
-
     $("homeChadsSection").classList.toggle("hidden", category !== "chads");
     $("homePotentialSection").classList.toggle("hidden", category !== "potential");
-
-    document.querySelectorAll(".home-category-btn").forEach(b => {
-      b.classList.toggle("active", b === btn);
-    });
+    document.querySelectorAll(".home-category-btn").forEach(b => b.classList.toggle("active", b === btn));
+    renderHomeCategoryStats(category);
   });
 });
 function memberScore(m){return Number(m.vote_count ?? m.voteCount ?? m.score ?? 0)}
@@ -2007,9 +2005,13 @@ async function updateLiveRankMovement(previousRanks) {
     for (const [memberId, newRank] of currentRankById.entries()) {
       const oldRank = previousRanks.get(memberId);
       if (oldRank && oldRank !== newRank) {
-        const { data: existing, error: readError } = await sb.from("rank_movement").select("initial_rank").eq("cycle_key", movementCycleKey).eq("member_id", memberId).maybeSingle();
-        if (readError) { console.warn("Movement read:", readError.message); continue; }
-        const initialRank = Number(existing?.initial_rank || oldRank);
+        const { data: existing, error: readError } = await sb.from("rank_movement")
+          .select("initial_rank")
+          .eq("cycle_key", movementCycleKey)
+          .eq("member_id", memberId)
+          .maybeSingle();
+        if (readError) { console.error("Movement read failed:", readError.message); continue; }
+        const initialRank = Number(existing?.initial_rank ?? oldRank);
         const delta = initialRank - newRank;
         const { error: saveError } = await sb.from("rank_movement").upsert({
           cycle_key: movementCycleKey,
@@ -2020,7 +2022,7 @@ async function updateLiveRankMovement(previousRanks) {
           delta,
           updated_at: new Date().toISOString()
         }, { onConflict: "cycle_key,member_id" });
-        if (saveError) console.warn("Movement save:", saveError.message);
+        if (saveError) console.error("Movement save failed:", saveError.message);
         else rankMovementById.set(memberId, delta);
       }
     }
@@ -2039,7 +2041,7 @@ async function loadMembers() {
   members = data || [];
   await Promise.all([refreshBattleWinStats(), loadRankingCycleState()]);
   renderAll();
-  updateLiveRankMovement(previousRanks);
+  await updateLiveRankMovement(previousRanks);
   renderAll();
 }
 async function loadRankingCycleState() {
@@ -2147,8 +2149,8 @@ function renderAll(){
   $("memberTotal").textContent = approved.length;
   $("voteTotal").textContent = approved.reduce((n,m)=>n+memberScore(m),0);
 
-  const stats = $("adminHomeStats");
-  if(stats) stats.classList.toggle("hidden", currentRole !== "admin");
+  const activeHomeCategory = document.querySelector(".home-category-btn.active")?.dataset.homeCategory || "chads";
+  renderHomeCategoryStats(activeHomeCategory);
 
   $("homeChadsTop").innerHTML =
     sortedMembers("chads")
