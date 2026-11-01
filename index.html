@@ -1427,9 +1427,35 @@ body > * {
 }
 .battle-wins-count { color: #e4cc91; font-size: 14px; margin: 8px 0; }
 .battle-result { color: #e4cc91; font-weight: 800; margin: 12px 0 0; }
+
+/* Category-exclusive medal frames and movement indicators */
+.member-card:not(.top-one):not(.top-two):not(.top-three):not(.potential-one):not(.potential-two):not(.potential-three) {
+  border: 2px solid #303030 !important;
+  background: linear-gradient(145deg,#171717,#080808 78%) !important;
+  box-shadow: none !important;
+}
+.member-card.top-one { border-color:#ffd95b !important; box-shadow:0 0 24px #ffd95b55, inset 0 0 18px #ffd95b18 !important; }
+.member-card.top-two { border-color:#e1e8f0 !important; box-shadow:0 0 20px #dce6f255, inset 0 0 16px #dce6f018 !important; }
+.member-card.top-three { border-color:#c98252 !important; box-shadow:0 0 20px #c9825250, inset 0 0 16px #c9825218 !important; }
+.member-card.potential-one { border-color:#ffd95b !important; box-shadow:0 0 24px #ffd95b55, inset 0 0 18px #ffd95b18 !important; }
+.member-card.potential-two { border-color:#e1e8f0 !important; box-shadow:0 0 20px #dce6f255, inset 0 0 16px #dce6f018 !important; }
+.member-card.potential-three { border-color:#c98252 !important; box-shadow:0 0 20px #c9825250, inset 0 0 16px #c9825218 !important; }
+.rank-movement { display:inline-flex; align-items:center; justify-content:center; margin:7px 4px 0; padding:4px 9px; border-radius:20px; font-weight:900; font-size:13px; }
+.rank-movement.up { color:#65f0a0; background:#123b27; border:1px solid #28794d; }
+.rank-movement.down { color:#ff8585; background:#451d1d; border:1px solid #8c3939; }
+.rank-movement.same { display:none; }
+.movement-panels { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; margin-top:28px; }
+.movement-panel h2 { margin-top:0; }
+.movement-item { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 0; border-bottom:1px solid var(--line); }
+.movement-item:last-child { border-bottom:0; }
+.movement-item .movement-name { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.movement-empty { color:var(--muted); font-size:13px; }
+#backNotice { position:fixed; left:50%; bottom:24px; transform:translateX(-50%); z-index:9999; background:#242424; color:#fff; border:1px solid #777; border-radius:10px; padding:12px 18px; box-shadow:0 8px 30px #0008; display:none; }
+@media(max-width:700px){ .movement-panels{grid-template-columns:1fr;} }
   </style> 
 </head>  
 <body>  
+<div id="backNotice" role="status" aria-live="polite">Press back again to exit</div>
 <div class="wrap">  
 <header class="top">  
   <div class="brand">CHAD <span>ACADEMY</span></div>  
@@ -1484,6 +1510,10 @@ body > * {
     <div class="empty">Loading…</div>
   </div>
 </section>
+<div class="movement-panels">
+  <section class="panel movement-panel"><h2>📈 Biggest Rises</h2><div id="biggestRises" class="movement-list"><p class="muted">Loading…</p></div></section>
+  <section class="panel movement-panel"><h2>📉 Biggest Drops</h2><div id="biggestDrops" class="movement-list"><p class="muted">Loading…</p></div></section>
+</div>
 </section>  <section id="rankings" class="page hidden">
   <div class="ranking-header">
     <span class="tag">THE HALL OF RANKINGS</span>
@@ -1762,22 +1792,43 @@ function safeHttpUrl(value) {
   if (!value) return "";  
   try { const u = new URL(value); return ["https:","http:"].includes(u.protocol) ? u.href : ""; } catch { return ""; }  
 }  
-function showPage(id) {  
-  document.querySelectorAll(".page").forEach(p => p.classList.toggle("hidden", p.id !== id));  
-  window.scrollTo({top:0,behavior:"smooth"});  
-  if (id === "rankings") renderRankings();  
-  if (id === "battles") {
-  fillBattleSelects();
-  loadBattles();
+let currentPageId = "home";
+let allowHomeExit = false;
+let homeExitTimer = null;
+function showPage(id, pushHistory = true) {
+  if (!$(id)) return;
+  if (pushHistory && id !== currentPageId) {
+    history.pushState({ chadPage: id }, "", "#" + id);
   }
-  if (id === "admin") loadAdmin();  
-}  
+  currentPageId = id;
+  document.querySelectorAll(".page").forEach(p => p.classList.toggle("hidden", p.id !== id));
+  window.scrollTo({top:0,behavior:"smooth"});
+  if (id === "rankings") renderRankings();
+  if (id === "battles") { fillBattleSelects(); loadBattles(); }
+  if (id === "admin") loadAdmin();
+}
+history.replaceState({ chadPage: "home" }, "", location.pathname + location.search + "#home");
+window.addEventListener("popstate", event => {
+  if (currentPageId === "home") {
+    if (allowHomeExit) { allowHomeExit = false; return; }
+    const notice = $("backNotice");
+    notice.style.display = "block";
+    allowHomeExit = true;
+    clearTimeout(homeExitTimer);
+    homeExitTimer = setTimeout(() => { allowHomeExit = false; notice.style.display = "none"; }, 2000);
+    history.pushState({ chadPage: "home" }, "", "#home");
+    return;
+  }
+  const target = event.state?.chadPage || "home";
+  showPage(target, false);
+});  
 document.querySelectorAll("[data-page]").forEach(btn =>
   btn.addEventListener("click", () => showPage(btn.dataset.page))
 );
 
 $("backToRankings").addEventListener("click", () => {
-  showPage("rankings");
+  if (history.state?.chadPage) history.back();
+  else showPage("rankings");
 });
 
 document.querySelectorAll(".categoryBtn").forEach(btn =>
@@ -1798,13 +1849,53 @@ document.querySelectorAll(".categoryBtn").forEach(btn =>
     });
   });
 });
-function memberScore(m){return Number(m.vote_count ?? m.voteCount ?? m.score ?? 0)}  
-function memberName(m){return m.display_name ?? m.name ?? "Unnamed member"}  
-function memberPhoto(m){return safeHttpUrl(m.photo_url ?? m.photo ?? "")}  
-function memberCategory(m){return m.category ?? "chads"}  
-function isApproved(m){return m.approved === true || m.status === "approved"}  
-function publicMembers(){return members.filter(isApproved)}  
-function sortedMembers(category){return publicMembers().filter(m=>memberCategory(m)===category).sort((a,b)=>memberScore(b)-memberScore(a))}  
+function memberScore(m){return Number(m.vote_count ?? m.voteCount ?? m.score ?? 0)}
+function cycleScore(m){return Number(m.cycle_vote_count ?? 0)}
+function memberName(m){return m.display_name ?? m.name ?? "Unnamed member"}
+function memberPhoto(m){return safeHttpUrl(m.photo_url ?? m.photo ?? "")}
+function memberCategory(m){return m.category ?? "chads"}
+function isApproved(m){return m.approved === true || m.status === "approved"}
+function publicMembers(){return members.filter(isApproved)}
+let refreshSettings = null;
+let latestRankSnapshots = [];
+let snapshotRankById = new Map();
+let isRankFrozen = false;
+let currentRankById = new Map();
+let rankMovementById = new Map();
+function calculateRankState() {
+  const freezeTime = refreshSettings?.freeze_until ? new Date(refreshSettings.freeze_until).getTime() : 0;
+  isRankFrozen = freezeTime > Date.now();
+  snapshotRankById = new Map(latestRankSnapshots.map(row => [String(row.member_id), Number(row.rank_position)]));
+  currentRankById = new Map();
+  rankMovementById = new Map();
+  for (const category of ["chads", "potential"]) {
+    let list = publicMembers().filter(m => memberCategory(m) === category);
+    if (isRankFrozen && latestRankSnapshots.length) {
+      const snapRows = latestRankSnapshots.filter(r => r.category === category).sort((a,b) => Number(a.rank_position)-Number(b.rank_position));
+      const ordered = snapRows.map(r => list.find(m => String(m.id) === String(r.member_id))).filter(Boolean);
+      const included = new Set(ordered.map(m => String(m.id)));
+      const newcomers = list.filter(m => !included.has(String(m.id))).sort((a,b) => cycleScore(b)-cycleScore(a) || new Date(a.created_at||0)-new Date(b.created_at||0));
+      list = [...ordered, ...newcomers];
+    } else {
+      list.sort((a,b) => cycleScore(b)-cycleScore(a) || new Date(a.created_at||0)-new Date(b.created_at||0) || String(a.id).localeCompare(String(b.id)));
+    }
+    list.forEach((m,i) => {
+      const rank = i+1;
+      currentRankById.set(String(m.id), rank);
+      const oldRank = snapshotRankById.get(String(m.id));
+      if (!isRankFrozen && oldRank && oldRank !== rank) rankMovementById.set(String(m.id), oldRank-rank);
+    });
+  }
+}
+function sortedMembers(category){
+  calculateRankState();
+  return publicMembers().filter(m=>memberCategory(m)===category).sort((a,b)=>(currentRankById.get(String(a.id))||999999)-(currentRankById.get(String(b.id))||999999));
+}
+function rankMovementHTML(memberId) {
+  const delta = Number(rankMovementById.get(String(memberId)) || 0);
+  if (!delta) return "";
+  return delta > 0 ? `<span class="rank-movement up">↑ ${delta}</span>` : `<span class="rank-movement down">↓ ${Math.abs(delta)}</span>`;
+}
 function memberCard(m, rank=null) {
   const photo = memberPhoto(m);
   const category = memberCategory(m);
@@ -1830,7 +1921,9 @@ function memberCard(m, rank=null) {
           <h3>${escapeHTML(memberName(m))}</h3>
           <div class="actions">
             ${voteButton}
+            ${rankMovementHTML(m.id)}
           </div>
+          <p class="small">${memberScore(m).toLocaleString()} lifetime votes</p>
         </div>
       </div>
     </article>`;
@@ -1860,9 +1953,35 @@ async function loadMembers() {
   const {data,error} = await sb.from("members").select("*");  
   if(error){console.error("Loading members:",error); return showLoadError(error);}  
   members = data || [];
-  await refreshBattleWinStats();
-  renderAll();  
-}  
+  await Promise.all([refreshBattleWinStats(), loadRankingCycleState()]);
+  renderAll();
+}
+async function loadRankingCycleState() {
+  const { data: settings, error: settingsError } = await sb.from("vote_refresh_settings").select("freeze_until, interval_key, next_refresh_at, activated_at").eq("id", true).maybeSingle();
+  if (settingsError) console.warn("Could not load vote refresh settings:", settingsError.message);
+  refreshSettings = settings || null;
+  const { data: snapshots, error: snapshotError } = await sb.from("vote_rank_snapshots").select("cycle_id, category, member_id, rank_position, vote_count, captured_at").order("captured_at", { ascending: false });
+  if (snapshotError) console.warn("Could not load rank snapshots:", snapshotError.message);
+  const rows = snapshots || [];
+  if (rows.length) {
+    const newestCapture = rows[0].captured_at;
+    latestRankSnapshots = rows.filter(row => row.captured_at === newestCapture);
+  } else latestRankSnapshots = [];
+  calculateRankState();
+}
+let rankingRealtimeChannel = null;
+function startRankingRealtimeUpdates() {
+  if (rankingRealtimeChannel) return;
+  rankingRealtimeChannel = sb.channel("chad-academy-live-rankings")
+    .on("postgres_changes", { event: "*", schema: "public", table: "members" }, async () => {
+      const { data, error } = await sb.from("members").select("*");
+      if (error) { console.warn("Live ranking refresh failed:", error.message); return; }
+      members = data || [];
+      await loadRankingCycleState();
+      renderAll();
+    })
+    .subscribe(status => console.log("Ranking live updates:", status));
+}
 function showLoadError(error){
   const msg = `Could not load profiles: ${error.message}. Check Supabase permissions.`;
 
@@ -1896,7 +2015,8 @@ function showLoadError(error){
       <span class="tag">${escapeHTML(category === "potential" ? "HTN & Potential" : "Chads Ranking")}</span>
       ${getBattleWinBadge(m.id)}
       <p class="battle-wins-count">⚔️ Battle Wins: ${Number(battleWinStats.get(String(m.id)) || 0)}</p>
-      <h2>${memberScore(m)} Votes</h2>
+      <h2>${memberScore(m).toLocaleString()} Lifetime Votes</h2>
+      <p class="muted">Current cycle votes: ${cycleScore(m).toLocaleString()}</p>
       ${platform ? `<p>Platform: ${platform}</p>` : ""}
       ${social ? `<p>Username: ${social}</p>` : ""}
       ${bio ? `<p>${bio}</p>` : ""}
@@ -1913,7 +2033,16 @@ function renderRankings(){
   $("rankList").innerHTML=list.length?list.map((m,i)=>memberCard(m,i+1)).join(""):`<div class="panel empty">No approved profiles in this category yet.</div>`;  
   attachVoteButtons();  
 }  
+function renderMovementSections() {
+  const changed = publicMembers().map(m => ({ member:m, delta:Number(rankMovementById.get(String(m.id))||0) })).filter(x => x.delta !== 0);
+  const rises = changed.filter(x => x.delta > 0).sort((a,b) => b.delta-a.delta).slice(0,5);
+  const drops = changed.filter(x => x.delta < 0).sort((a,b) => a.delta-b.delta).slice(0,5);
+  const html = (items, direction) => items.length ? items.map(x => `<div class="movement-item"><span class="movement-name">${escapeHTML(memberName(x.member))}</span><strong class="rank-movement ${direction}">${direction === "up" ? "↑ " + x.delta : "↓ " + Math.abs(x.delta)}</strong></div>`).join("") : `<p class="movement-empty">No rank changes yet.</p>`;
+  if ($("biggestRises")) $("biggestRises").innerHTML = html(rises,"up");
+  if ($("biggestDrops")) $("biggestDrops").innerHTML = html(drops,"down");
+}
 function renderAll(){
+  calculateRankState();
   const approved = publicMembers();
 
   $("memberTotal").textContent = approved.length;
@@ -1933,8 +2062,9 @@ function renderAll(){
     `<div class="panel empty">No approved profiles yet.</div>`;
 
   renderRankings();
+  renderMovementSections();
   fillBattleSelects();
- } 
+ }
 async function loadVoteHistory(){
     if(!currentUser){
         votedIds = new Set();
@@ -2793,7 +2923,8 @@ sb.auth.onAuthStateChange(async(_event,session)=>{
   await loadVoteHistory();
   await loadMyEditableProfile();
   }
-  await loadMembers();  
+  await loadMembers();
+  startRankingRealtimeUpdates();
   // Pending count is visible to admins only.  
   if(currentRole==="admin")await loadAdmin(); 
  if(currentRole==="admin")await loadVoteRefreshSettings();
