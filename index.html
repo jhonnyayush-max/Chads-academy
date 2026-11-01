@@ -1487,7 +1487,10 @@ body > * {
 .movement-panel h2 { margin-top:0; }
 .movement-item { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 0; border-bottom:1px solid var(--line); }
 .movement-item:last-child { border-bottom:0; }
-.movement-item .movement-name { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.movement-person { display:flex; align-items:center; gap:11px; min-width:0; flex:1; }
+.movement-avatar { width:46px; height:46px; flex:0 0 46px; border-radius:50%; object-fit:cover; border:2px solid var(--gold); background:#282116; }
+.movement-avatar-placeholder { display:flex; align-items:center; justify-content:center; color:var(--gold-light); font-size:21px; }
+.movement-item .movement-name { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:700; }
 .movement-empty { color:var(--muted); font-size:13px; }
 #backNotice { position:fixed; left:50%; bottom:24px; transform:translateX(-50%); z-index:9999; background:#242424; color:#fff; border:1px solid #777; border-radius:10px; padding:12px 18px; box-shadow:0 8px 30px #0008; display:none; }
 @media(max-width:700px){ .movement-panels{grid-template-columns:1fr;} }
@@ -2092,7 +2095,13 @@ function renderMovementSections() {
   const changed = publicMembers().map(m => ({ member:m, delta:Number(rankMovementById.get(String(m.id))||0) })).filter(x => x.delta !== 0);
   const rises = changed.filter(x => x.delta > 0).sort((a,b) => b.delta-a.delta).slice(0,5);
   const drops = changed.filter(x => x.delta < 0).sort((a,b) => a.delta-b.delta).slice(0,5);
-  const html = (items, direction) => items.length ? items.map(x => `<div class="movement-item"><span class="movement-name">${escapeHTML(memberName(x.member))}</span><strong class="rank-movement ${direction}">${direction === "up" ? "↑ " + x.delta : "↓ " + Math.abs(x.delta)}</strong></div>`).join("") : `<p class="movement-empty">No rank changes yet.</p>`;
+  const html = (items, direction) => items.length ? items.map(x => {
+    const photo = memberPhoto(x.member);
+    const avatar = photo
+      ? `<img class="movement-avatar" src="${escapeHTML(photo)}" alt="${escapeHTML(memberName(x.member))} profile photo" onerror="this.outerHTML='<span class=\'movement-avatar movement-avatar-placeholder\' aria-hidden=\'true\'>♛</span>'">`
+      : `<span class="movement-avatar movement-avatar-placeholder" aria-hidden="true">♛</span>`;
+    return `<div class="movement-item"><div class="movement-person">${avatar}<span class="movement-name">${escapeHTML(memberName(x.member))}</span></div><strong class="rank-movement ${direction}">${direction === "up" ? "↑ " + x.delta : "↓ " + Math.abs(x.delta)}</strong></div>`;
+  }).join("") : `<p class="movement-empty">No rank changes yet.</p>`;
   if ($("biggestRises")) $("biggestRises").innerHTML = html(rises,"up");
   if ($("biggestDrops")) $("biggestDrops").innerHTML = html(drops,"down");
 }
