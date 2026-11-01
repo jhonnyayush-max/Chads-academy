@@ -995,13 +995,27 @@ letter-spacing: 4px;
 }
 
 /* Make current-cycle votes the main visible vote figure */
+.member-card .member-info .actions {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+  margin:10px 0 4px;
+  min-height:42px;
+}
+.member-card .member-info .actions .voteBtn { flex:0 0 auto; }
+.member-card .member-info .actions .rank-movement { flex:0 0 auto; margin:0; }
 .current-votes {
-  display: block;
-  margin: 6px 0 2px;
-  color: var(--gold-light);
-  font-size: 14px;
-  line-height: 1.25;
-  font-weight: 600;
+  display:block;
+  width:100%;
+  clear:both;
+  margin:7px 0 2px;
+  color:var(--gold-light);
+  font-size:12px;
+  line-height:1.25;
+  font-weight:400;
+  text-align:center;
+  opacity:.88;
 }
 .lifetime-votes {
   display: block;
@@ -1878,9 +1892,9 @@ document.querySelectorAll(".categoryBtn").forEach(btn =>
   })
 );
  function renderHomeCategoryStats(category) {
-  // Category-specific movement panels are shown in the top home summary area.
-  $("homeChadsMovementTop").classList.toggle("hidden", category !== "chads");
-  $("homePotentialMovementTop").classList.toggle("hidden", category !== "potential");
+  // Keep both category movement summaries visible; the tabs only switch member cards.
+  $("homeChadsMovementTop").classList.remove("hidden");
+  $("homePotentialMovementTop").classList.remove("hidden");
 }
 document.querySelectorAll(".home-category-btn").forEach(btn => {
   btn.addEventListener("click", () => {
@@ -2693,9 +2707,18 @@ $("logoutButton").addEventListener("click",async()=>{
 });  
 async function loadManageMembers(){
   const box=$("manageMembers");
+  if (!box) return;
+  box.innerHTML = '<div class="panel empty">Loading members…</div>';
 
-  if(!currentUser||currentRole!=="admin"){
-    box.innerHTML="";
+  if (!currentUser) {
+    box.innerHTML = '<div class="panel">Please log in with the administrator account.</div>';
+    return;
+  }
+  // Re-check the role here so a slow auth-state callback cannot leave the
+  // Manage Chad List stuck in its initial loading state.
+  if (currentRole !== "admin") await refreshRole(currentUser);
+  if (currentRole !== "admin") {
+    box.innerHTML = `<div class="panel">Admin access required.${window.adminRoleLoadError ? '<br><small>'+escapeHTML(window.adminRoleLoadError)+'</small>' : ''}</div>`;
     return;
   }
 
