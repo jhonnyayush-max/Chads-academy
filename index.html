@@ -2021,20 +2021,24 @@ async function syncPersistentRankMovement() {
   }
 
   const { data: allRows, error } = await sb.from("rank_movement")
-  .select("cycle_key, member_id, category, initial_rank, current_rank, delta");
+    .select("cycle_key, member_id, category, initial_rank, current_rank, delta");
 
-if (error) {
-  console.error("Movement load failed:", error.message);
-  window.rankMovementLoadError = error.message;
-  return;
-}
+  if (error) {
+    console.error("Movement load failed:", error.message);
+    window.rankMovementLoadError = error.message;
+    return;
+  }
 
-const rows = (allRows || []).filter(row =>
-  Date.parse(row.cycle_key) === Date.parse(movementCycleKey)
-);
+  // Compare timestamps as instants, not raw strings (Postgres and JS
+  // can format the same timestamp differently).
+  const targetCycleTime = Date.parse(movementCycleKey);
+  const rows = (allRows || []).filter(row =>
+    Number.isFinite(Date.parse(row.cycle_key)) &&
+    Date.parse(row.cycle_key) === targetCycleTime
+  );
 
   rankMovementById = new Map();
-  (rows || []).forEach(row => {
+  rows.forEach(row => {
     const delta = Number(row.delta || 0);
     if (delta !== 0) rankMovementById.set(String(row.member_id), delta);
   });
@@ -2064,26 +2068,18 @@ async function loadRankingCycleState() {
   rankMovementById = new Map();
   if (movementCycleKey) {
     const { data: allMovementRows, error: movementError } = await sb.from("rank_movement")
-  .select("cycle_key, member_id, category, delta");
-
-if (movementError) {
-  console.error("Could not load saved rank movement:", movementError.message);
-  window.rankMovementLoadError = movementError.message;
-} else {
-  window.rankMovementLoadError = null;
-  const movementRows = (allMovementRows || []).filter(row =>
-    Date.parse(row.cycle_key) === Date.parse(movementCycleKey)
-  );
-  movementRows.forEach(row =>
-    rankMovementById.set(String(row.member_id), Number(row.delta || 0))
-  );
- }
+      .select("cycle_key, member_id, category, delta");
     if (movementError) {
       console.error("Could not load saved rank movement:", movementError.message);
       window.rankMovementLoadError = movementError.message;
     } else {
       window.rankMovementLoadError = null;
-      (movementRows || []).forEach(row => rankMovementById.set(String(row.member_id), Number(row.delta || 0)));
+      const targetCycleTime = Date.parse(movementCycleKey);
+      const movementRows = (allMovementRows || []).filter(row =>
+        Number.isFinite(Date.parse(row.cycle_key)) &&
+        Date.parse(row.cycle_key) === targetCycleTime
+      );
+      movementRows.forEach(row => rankMovementById.set(String(row.member_id), Number(row.delta || 0)));
     }
   }
   calculateRankState();
@@ -2638,7 +2634,11 @@ async function loadManageMembers(){
 
   let result;
   try {
-    result = await sb.from("members").select("*").order("created_at", { ascending: true });
+    const request = sb.from("members").select("*").order("created_at", { ascending: true });
+    const timeout = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error("Request timed out. Please refresh and try again.")), 15000)
+    );
+    result = await Promise.race([request, timeout]);
   } catch (requestError) {
     box.innerHTML=`<div class="panel">Could not load Chad List: ${escapeHTML(requestError.message || "Network error")}</div>`;
     console.error("Manage Chad List request failed:", requestError);
