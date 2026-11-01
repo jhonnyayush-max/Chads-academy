@@ -1552,9 +1552,19 @@ body > * {
     <div class="empty">Loading…</div>
   </div>
 </section>
-<div class="movement-panels">
-  <section class="panel movement-panel"><h2>📈 Biggest Rises</h2><div id="biggestRises" class="movement-list"><p class="muted">Loading…</p></div></section>
-  <section class="panel movement-panel"><h2>📉 Biggest Drops</h2><div id="biggestDrops" class="movement-list"><p class="muted">Loading…</p></div></section>
+<div class="movement-category-group">
+  <h2 class="movement-category-title">♛ Chads Ranking — Rank Movement</h2>
+  <div class="movement-panels">
+    <section class="panel movement-panel"><h3>📈 Biggest Rises</h3><div id="biggestRisesChads" class="movement-list"><p class="muted">Loading…</p></div></section>
+    <section class="panel movement-panel"><h3>📉 Biggest Drops</h3><div id="biggestDropsChads" class="movement-list"><p class="muted">Loading…</p></div></section>
+  </div>
+</div>
+<div class="movement-category-group">
+  <h2 class="movement-category-title">✦ HTN &amp; Potential — Rank Movement</h2>
+  <div class="movement-panels">
+    <section class="panel movement-panel"><h3>📈 Biggest Rises</h3><div id="biggestRisesPotential" class="movement-list"><p class="muted">Loading…</p></div></section>
+    <section class="panel movement-panel"><h3>📉 Biggest Drops</h3><div id="biggestDropsPotential" class="movement-list"><p class="muted">Loading…</p></div></section>
+  </div>
 </div>
 </section>  <section id="rankings" class="page hidden">
   <div class="ranking-header">
@@ -1905,6 +1915,7 @@ let isRankFrozen = false;
 let currentRankById = new Map();
 let rankMovementById = new Map();
 let lastKnownRankById = null;
+let movementCycleKey = null;
 function calculateRankState() {
   const freezeTime = refreshSettings?.freeze_until ? new Date(refreshSettings.freeze_until).getTime() : 0;
   isRankFrozen = freezeTime > Date.now();
@@ -1990,18 +2001,31 @@ function attachVoteButtons(){
     });
   });
 } 
-function updateLiveRankMovement(previousRanks) {
-  // Keep the most recent movement visible; do not clear it on every data reload.
-  // This also prevents a second Realtime refresh from erasing the arrow immediately.
-  if (previousRanks && !isRankFrozen) {
+async function updateLiveRankMovement(previousRanks) {
+  // Save net movement from the member's first rank in this voting cycle.
+  if (previousRanks && !isRankFrozen && movementCycleKey) {
     for (const [memberId, newRank] of currentRankById.entries()) {
       const oldRank = previousRanks.get(memberId);
       if (oldRank && oldRank !== newRank) {
-        rankMovementById.set(memberId, oldRank - newRank);
+        const { data: existing, error: readError } = await sb.from("rank_movement").select("initial_rank").eq("cycle_key", movementCycleKey).eq("member_id", memberId).maybeSingle();
+        if (readError) { console.warn("Movement read:", readError.message); continue; }
+        const initialRank = Number(existing?.initial_rank || oldRank);
+        const delta = initialRank - newRank;
+        const { error: saveError } = await sb.from("rank_movement").upsert({
+          cycle_key: movementCycleKey,
+          member_id: memberId,
+          category: memberCategory(members.find(m => String(m.id) === memberId) || {}),
+          initial_rank: initialRank,
+          current_rank: newRank,
+          delta,
+          updated_at: new Date().toISOString()
+        }, { onConflict: "cycle_key,member_id" });
+        if (saveError) console.warn("Movement save:", saveError.message);
+        else rankMovementById.set(memberId, delta);
       }
     }
   }
-  // Remove movement badges for profiles that are no longer approved/present.
+  // Remove entries for profiles that are no longer approved/present.
   const activeIds = new Set(publicMembers().map(m => String(m.id)));
   for (const memberId of rankMovementById.keys()) {
     if (!activeIds.has(memberId)) rankMovementById.delete(memberId);
@@ -2022,6 +2046,7 @@ async function loadRankingCycleState() {
   const { data: settings, error: settingsError } = await sb.from("vote_refresh_settings").select("freeze_until, interval_key, next_refresh_at, activated_at").eq("id", true).maybeSingle();
   if (settingsError) console.warn("Could not load vote refresh settings:", settingsError.message);
   refreshSettings = settings || null;
+  movementCycleKey = settings?.activated_at ? String(settings.activated_at) : null;
   const { data: snapshots, error: snapshotError } = await sb.from("vote_rank_snapshots").select("cycle_id, category, member_id, rank_position, vote_count, captured_at").order("captured_at", { ascending: false });
   if (snapshotError) console.warn("Could not load rank snapshots:", snapshotError.message);
   const rows = snapshots || [];
@@ -2029,6 +2054,12 @@ async function loadRankingCycleState() {
     const newestCapture = rows[0].captured_at;
     latestRankSnapshots = rows.filter(row => row.captured_at === newestCapture);
   } else latestRankSnapshots = [];
+  rankMovementById = new Map();
+  if (movementCycleKey) {
+    const { data: movementRows, error: movementError } = await sb.from("rank_movement").select("member_id, category, delta").eq("cycle_key", movementCycleKey);
+    if (movementError) console.warn("Could not load saved rank movement:", movementError.message);
+    (movementRows || []).forEach(row => rankMovementById.set(String(row.member_id), Number(row.delta || 0)));
+  }
   calculateRankState();
 }
 let rankingRealtimeChannel = null;
@@ -2092,9 +2123,6 @@ function renderRankings(){
   attachVoteButtons();  
 }  
 function renderMovementSections() {
-  const changed = publicMembers().map(m => ({ member:m, delta:Number(rankMovementById.get(String(m.id))||0) })).filter(x => x.delta !== 0);
-  const rises = changed.filter(x => x.delta > 0).sort((a,b) => b.delta-a.delta).slice(0,5);
-  const drops = changed.filter(x => x.delta < 0).sort((a,b) => a.delta-b.delta).slice(0,5);
   const html = (items, direction) => items.length ? items.map(x => {
     const photo = memberPhoto(x.member);
     const avatar = photo
@@ -2102,8 +2130,15 @@ function renderMovementSections() {
       : `<span class="movement-avatar movement-avatar-placeholder" aria-hidden="true">♛</span>`;
     return `<div class="movement-item"><div class="movement-person">${avatar}<span class="movement-name">${escapeHTML(memberName(x.member))}</span></div><strong class="rank-movement ${direction}">${direction === "up" ? "↑ " + x.delta : "↓ " + Math.abs(x.delta)}</strong></div>`;
   }).join("") : `<p class="movement-empty">No rank changes yet.</p>`;
-  if ($("biggestRises")) $("biggestRises").innerHTML = html(rises,"up");
-  if ($("biggestDrops")) $("biggestDrops").innerHTML = html(drops,"down");
+  for (const category of ["chads", "potential"]) {
+    const changed = publicMembers().filter(m => memberCategory(m) === category).map(m => ({ member:m, delta:Number(rankMovementById.get(String(m.id))||0) })).filter(x => x.delta !== 0);
+    const rises = changed.filter(x => x.delta > 0).sort((a,b) => b.delta-a.delta).slice(0,5);
+    const drops = changed.filter(x => x.delta < 0).sort((a,b) => a.delta-b.delta).slice(0,5);
+    const suffix = category === "chads" ? "Chads" : "Potential";
+    const riseEl = $("biggestRises" + suffix), dropEl = $("biggestDrops" + suffix);
+    if (riseEl) riseEl.innerHTML = html(rises,"up");
+    if (dropEl) dropEl.innerHTML = html(drops,"down");
+  }
 }
 function renderAll(){
   calculateRankState();
