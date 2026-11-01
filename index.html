@@ -2766,6 +2766,7 @@ const {data,error} = pendingResult;
 if(error){
 $("adminList").innerHTML =
 `<div class="panel">Could not load applications: ${escapeHTML(error.message)}</div>`;
+await loadManageMembers();
 return;
 }
 
