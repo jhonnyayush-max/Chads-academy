@@ -1548,12 +1548,6 @@ body > * {
     <div class="empty">Loading…</div>
   </div>
 </section>
-
-<section class="home-ranking hidden" id="homePotentialSection">
-  <div id="homePotentialTop" class="grid">
-    <div class="empty">Loading…</div>
-  </div>
-</section>
 </section>  <section id="rankings" class="page hidden">
   <div class="ranking-header">
     <span class="tag">THE HALL OF RANKINGS</span>
@@ -1929,9 +1923,20 @@ function calculateRankState() {
       currentRankById.set(String(m.id), rank);
     });
   }
-  // Persistent movement is loaded from public.rank_movement. Do not derive it
-  // from vote_rank_snapshots here: those rows represent the previous cycle's
-  // closing ranks, not a reliable baseline for the currently active cycle.
+  // Rebuild cycle movement on every load from the saved cycle-start rank snapshot.
+  // This survives page refreshes and does not depend on a browser remembering prior ranks.
+  if (movementCycleKey && snapshotRankById.size) {
+    for (const m of publicMembers()) {
+      const id = String(m.id);
+      const startRank = snapshotRankById.get(id);
+      const nowRank = currentRankById.get(id);
+      if (startRank != null && nowRank != null) {
+        const delta = Number(startRank) - Number(nowRank);
+        if (delta !== 0) rankMovementById.set(id, delta);
+        else rankMovementById.delete(id);
+      }
+    }
+  }
 }
 function sortedMembers(category){
   calculateRankState();
@@ -1996,107 +2001,49 @@ function attachVoteButtons(){
     });
   });
 } 
-async function syncPersistentRankMovement() {
-  if (!movementCycleKey) {
-    rankMovementById = new Map();
-    return;
-  }
-
-  calculateRankState();
-  const approvedMembers = publicMembers();
-  let { data: rows, error } = await sb.from("rank_movement")
-    .select("member_id, category, initial_rank, current_rank, delta")
-    .eq("cycle_key", movementCycleKey);
-
-  if (error) {
-    console.error("Movement load failed:", error.message);
-    window.rankMovementLoadError = error.message;
-    return;
-  }
-  window.rankMovementLoadError = null;
-
-  // The first authenticated visit in a cycle records a durable starting-rank
-  // baseline for every currently approved member. Existing rows are preserved;
-  // subsequent rank changes are measured against this baseline until the cycle
-  // key changes at the next scheduled vote refresh.
-  if (currentUser) {
-    const knownIds = new Set((rows || []).map(row => String(row.member_id)));
-    const baselines = approvedMembers
-      .filter(member => !knownIds.has(String(member.id)))
-      .map(member => ({
-        cycle_key: movementCycleKey,
-        member_id: member.id,
-        category: memberCategory(member),
-        initial_rank: Number(currentRankById.get(String(member.id)) || 0),
-        current_rank: Number(currentRankById.get(String(member.id)) || 0),
-        delta: 0,
-        updated_at: new Date().toISOString()
-      }));
-
-    if (baselines.length) {
-      const { error: baselineError } = await sb.from("rank_movement")
-        .upsert(baselines, { onConflict: "cycle_key,member_id", ignoreDuplicates: true });
-      if (baselineError) console.error("Movement baseline save failed:", baselineError.message);
-    }
-
-    // Re-read after baseline creation, then compare today's rank with the
-    // original rank stored for this cycle. This is independent of realtime
-    // event order and does not rely on a temporary in-memory previous-rank map.
-    const refreshed = await sb.from("rank_movement")
-      .select("member_id, category, initial_rank, current_rank, delta")
-      .eq("cycle_key", movementCycleKey);
-    if (refreshed.error) {
-      console.error("Movement refresh failed:", refreshed.error.message);
-      window.rankMovementLoadError = refreshed.error.message;
-      return;
-    }
-    rows = refreshed.data || [];
-
-    const updates = [];
-    for (const row of rows) {
-      const id = String(row.member_id);
-      const currentRank = currentRankById.get(id);
-      if (currentRank == null) continue;
-      const delta = Number(row.initial_rank) - Number(currentRank);
-      if (Number(row.current_rank) !== Number(currentRank) || Number(row.delta) !== delta) {
-        updates.push({
+async function updateLiveRankMovement(previousRanks) {
+  // Save net movement from the member's first rank in this voting cycle.
+  if (previousRanks && !isRankFrozen && movementCycleKey) {
+    for (const [memberId, newRank] of currentRankById.entries()) {
+      const oldRank = previousRanks.get(memberId);
+      if (oldRank && oldRank !== newRank) {
+        const { data: existing, error: readError } = await sb.from("rank_movement")
+          .select("initial_rank")
+          .eq("cycle_key", movementCycleKey)
+          .eq("member_id", memberId)
+          .maybeSingle();
+        if (readError) { console.error("Movement read failed:", readError.message); continue; }
+        const initialRank = Number(existing?.initial_rank ?? oldRank);
+        const delta = initialRank - newRank;
+        const { error: saveError } = await sb.from("rank_movement").upsert({
           cycle_key: movementCycleKey,
-          member_id: row.member_id,
-          category: row.category,
-          initial_rank: Number(row.initial_rank),
-          current_rank: Number(currentRank),
+          member_id: memberId,
+          category: memberCategory(members.find(m => String(m.id) === memberId) || {}),
+          initial_rank: initialRank,
+          current_rank: newRank,
           delta,
           updated_at: new Date().toISOString()
-        });
-      }
-    }
-    if (updates.length) {
-      const { error: updateError } = await sb.from("rank_movement")
-        .upsert(updates, { onConflict: "cycle_key,member_id" });
-      if (updateError) {
-        console.error("Movement update failed:", updateError.message);
-        window.rankMovementLoadError = updateError.message;
-      }
-      const updatedById = new Map(updates.map(row => [String(row.member_id), Number(row.delta)]));
-      for (const [id, delta] of updatedById) {
-        const existing = rows.find(row => String(row.member_id) === id);
-        if (existing) existing.delta = delta;
+        }, { onConflict: "cycle_key,member_id" });
+        if (saveError) console.error("Movement save failed:", saveError.message);
+        else rankMovementById.set(memberId, delta);
       }
     }
   }
-
-  rankMovementById = new Map();
-  (rows || []).forEach(row => {
-    if (Number(row.delta || 0) !== 0) rankMovementById.set(String(row.member_id), Number(row.delta));
-  });
+  // Remove entries for profiles that are no longer approved/present.
+  const activeIds = new Set(publicMembers().map(m => String(m.id)));
+  for (const memberId of rankMovementById.keys()) {
+    if (!activeIds.has(memberId)) rankMovementById.delete(memberId);
+  }
+  lastKnownRankById = new Map(currentRankById);
 }
 async function loadMembers() {
+  const previousRanks = lastKnownRankById ? new Map(lastKnownRankById) : null;
   const {data,error} = await sb.from("members").select("*");
   if(error){console.error("Loading members:",error); return showLoadError(error);}
   members = data || [];
   await Promise.all([refreshBattleWinStats(), loadRankingCycleState()]);
-  calculateRankState();
-  await syncPersistentRankMovement();
+  renderAll();
+  await updateLiveRankMovement(previousRanks);
   renderAll();
 }
 async function loadRankingCycleState() {
@@ -2114,13 +2061,8 @@ async function loadRankingCycleState() {
   rankMovementById = new Map();
   if (movementCycleKey) {
     const { data: movementRows, error: movementError } = await sb.from("rank_movement").select("member_id, category, delta").eq("cycle_key", movementCycleKey);
-    if (movementError) {
-      console.error("Could not load saved rank movement:", movementError.message);
-      window.rankMovementLoadError = movementError.message;
-    } else {
-      window.rankMovementLoadError = null;
-      (movementRows || []).forEach(row => rankMovementById.set(String(row.member_id), Number(row.delta || 0)));
-    }
+    if (movementError) console.warn("Could not load saved rank movement:", movementError.message);
+    (movementRows || []).forEach(row => rankMovementById.set(String(row.member_id), Number(row.delta || 0)));
   }
   calculateRankState();
 }
@@ -2132,21 +2074,6 @@ function startRankingRealtimeUpdates() {
       await loadMembers();
     })
     .subscribe(status => console.log("Ranking live updates:", status));
-
-  // Realtime is the primary update path. This light polling fallback keeps
-  // rank movement in sync for visitors if a browser misses a realtime event.
-  let movementRefreshRunning = false;
-  window.setInterval(async () => {
-    if (document.hidden || movementRefreshRunning) return;
-    movementRefreshRunning = true;
-    try {
-      await loadMembers();
-    } catch (error) {
-      console.error("Periodic ranking refresh failed:", error);
-    } finally {
-      movementRefreshRunning = false;
-    }
-  }, 15000);
 }
 function showLoadError(error){
   const msg = `Could not load profiles: ${error.message}. Check Supabase permissions.`;
@@ -2213,13 +2140,8 @@ function renderMovementSections() {
     const drops = changed.filter(x => x.delta < 0).sort((a,b) => a.delta-b.delta).slice(0,5);
     const suffix = category === "chads" ? "Chads" : "Potential";
     const riseEl = $("biggestRises" + suffix), dropEl = $("biggestDrops" + suffix);
-    const loadError = window.rankMovementLoadError;
-    if (riseEl) riseEl.innerHTML = loadError
-      ? `<p class="movement-empty">Could not load movement: ${escapeHTML(loadError)}</p>`
-      : html(rises,"up");
-    if (dropEl) dropEl.innerHTML = loadError
-      ? `<p class="movement-empty">Could not load movement: ${escapeHTML(loadError)}</p>`
-      : html(drops,"down");
+    if (riseEl) riseEl.innerHTML = html(rises,"up");
+    if (dropEl) dropEl.innerHTML = html(drops,"down");
   }
 }
 function renderAll(){
