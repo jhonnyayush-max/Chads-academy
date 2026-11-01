@@ -1901,12 +1901,12 @@ let snapshotRankById = new Map();
 let isRankFrozen = false;
 let currentRankById = new Map();
 let rankMovementById = new Map();
+let lastKnownRankById = null;
 function calculateRankState() {
   const freezeTime = refreshSettings?.freeze_until ? new Date(refreshSettings.freeze_until).getTime() : 0;
   isRankFrozen = freezeTime > Date.now();
   snapshotRankById = new Map(latestRankSnapshots.map(row => [String(row.member_id), Number(row.rank_position)]));
   currentRankById = new Map();
-  rankMovementById = new Map();
   for (const category of ["chads", "potential"]) {
     let list = publicMembers().filter(m => memberCategory(m) === category);
     if (isRankFrozen && latestRankSnapshots.length) {
@@ -1921,8 +1921,6 @@ function calculateRankState() {
     list.forEach((m,i) => {
       const rank = i+1;
       currentRankById.set(String(m.id), rank);
-      const oldRank = snapshotRankById.get(String(m.id));
-      if (!isRankFrozen && oldRank && oldRank !== rank) rankMovementById.set(String(m.id), oldRank-rank);
     });
   }
 }
@@ -1989,11 +1987,26 @@ function attachVoteButtons(){
     });
   });
 } 
-async function loadMembers() {  
-  const {data,error} = await sb.from("members").select("*");  
-  if(error){console.error("Loading members:",error); return showLoadError(error);}  
+function updateLiveRankMovement(previousRanks) {
+  rankMovementById = new Map();
+  if (previousRanks && !isRankFrozen) {
+    for (const [memberId, newRank] of currentRankById.entries()) {
+      const oldRank = previousRanks.get(memberId);
+      if (oldRank && oldRank !== newRank) {
+        rankMovementById.set(memberId, oldRank - newRank);
+      }
+    }
+  }
+  lastKnownRankById = new Map(currentRankById);
+}
+async function loadMembers() {
+  const previousRanks = lastKnownRankById ? new Map(lastKnownRankById) : null;
+  const {data,error} = await sb.from("members").select("*");
+  if(error){console.error("Loading members:",error); return showLoadError(error);}
   members = data || [];
   await Promise.all([refreshBattleWinStats(), loadRankingCycleState()]);
+  renderAll();
+  updateLiveRankMovement(previousRanks);
   renderAll();
 }
 async function loadRankingCycleState() {
@@ -2014,11 +2027,7 @@ function startRankingRealtimeUpdates() {
   if (rankingRealtimeChannel) return;
   rankingRealtimeChannel = sb.channel("chad-academy-live-rankings")
     .on("postgres_changes", { event: "*", schema: "public", table: "members" }, async () => {
-      const { data, error } = await sb.from("members").select("*");
-      if (error) { console.warn("Live ranking refresh failed:", error.message); return; }
-      members = data || [];
-      await loadRankingCycleState();
-      renderAll();
+      await loadMembers();
     })
     .subscribe(status => console.log("Ranking live updates:", status));
 }
