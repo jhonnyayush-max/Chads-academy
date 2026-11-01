@@ -2015,9 +2015,10 @@ async function syncPersistentRankMovement() {
   }
   window.rankMovementLoadError = null;
 
-  // The first authenticated visit in a cycle records a durable baseline for
-  // every currently approved member. ignoreDuplicates preserves that baseline
-  // on later visits and after browser refreshes.
+  // The first authenticated visit in a cycle records a durable starting-rank
+  // baseline for every currently approved member. Existing rows are preserved;
+  // subsequent rank changes are measured against this baseline until the cycle
+  // key changes at the next scheduled vote refresh.
   if (currentUser) {
     const knownIds = new Set((rows || []).map(row => String(row.member_id)));
     const baselines = approvedMembers
@@ -2131,6 +2132,21 @@ function startRankingRealtimeUpdates() {
       await loadMembers();
     })
     .subscribe(status => console.log("Ranking live updates:", status));
+
+  // Realtime is the primary update path. This light polling fallback keeps
+  // rank movement in sync for visitors if a browser misses a realtime event.
+  let movementRefreshRunning = false;
+  window.setInterval(async () => {
+    if (document.hidden || movementRefreshRunning) return;
+    movementRefreshRunning = true;
+    try {
+      await loadMembers();
+    } catch (error) {
+      console.error("Periodic ranking refresh failed:", error);
+    } finally {
+      movementRefreshRunning = false;
+    }
+  }, 15000);
 }
 function showLoadError(error){
   const msg = `Could not load profiles: ${error.message}. Check Supabase permissions.`;
