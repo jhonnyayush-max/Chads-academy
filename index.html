@@ -994,6 +994,36 @@ letter-spacing: 4px;
   margin: 0 0 8px !important;
 }
 
+/* Make current-cycle votes the main visible vote figure */
+.current-votes {
+  display: block;
+  margin: 9px 0 2px;
+  color: var(--gold-light);
+  font-size: 20px;
+  line-height: 1.2;
+  font-weight: 900;
+}
+.lifetime-votes {
+  display: block;
+  margin: 3px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.3;
+  font-weight: 400;
+}
+.profile-current-votes {
+  margin: 12px 0 4px;
+  color: var(--gold-light);
+  font-size: 25px;
+  font-weight: 900;
+}
+.profile-lifetime-votes {
+  margin: 2px 0 10px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 400;
+}
+
 /* VOTE BUTTON */
 .member-card .voteBtn,
 .member-card .actions button {
@@ -1932,7 +1962,8 @@ function memberCard(m, rank=null) {
             ${voteButton}
             ${rankMovementHTML(m.id)}
           </div>
-          <p class="small">${memberScore(m).toLocaleString()} lifetime votes</p>
+          <p class="current-votes">${cycleScore(m).toLocaleString()} Current Votes</p>
+          <p class="lifetime-votes">Lifetime Votes: ${memberScore(m).toLocaleString()}</p>
         </div>
       </div>
     </article>`;
@@ -2024,8 +2055,8 @@ function showLoadError(error){
       <span class="tag">${escapeHTML(category === "potential" ? "HTN & Potential" : "Chads Ranking")}</span>
       ${getBattleWinBadge(m.id)}
       <p class="battle-wins-count">⚔️ Battle Wins: ${Number(battleWinStats.get(String(m.id)) || 0)}</p>
-      <h2>${memberScore(m).toLocaleString()} Lifetime Votes</h2>
-      <p class="muted">Current cycle votes: ${cycleScore(m).toLocaleString()}</p>
+      <h2 class="profile-current-votes">${cycleScore(m).toLocaleString()} Current Votes</h2>
+      <p class="profile-lifetime-votes">Lifetime Votes: ${memberScore(m).toLocaleString()}</p>
       ${platform ? `<p>Platform: ${platform}</p>` : ""}
       ${social ? `<p>Username: ${social}</p>` : ""}
       ${bio ? `<p>${bio}</p>` : ""}
