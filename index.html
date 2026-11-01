@@ -3194,12 +3194,19 @@ $("editProfileForm").addEventListener("submit", async function(e) {
     button.textContent = "Save Profile";
   }
 });
-sb.auth.onAuthStateChange(async(_event,session)=>{  
-  updateAuthUI(session?.user||null);  
-  if(session?.user){  
-    await refreshRole(session.user);  
-    await loadVoteHistory();  
-  }  
+// Keep Supabase auth callbacks synchronous. Awaiting another Supabase
+// request inside onAuthStateChange can hold the auth lock and leave role
+// checks stuck on "Checking administrator access…".
+sb.auth.onAuthStateChange((_event, session) => {
+  const user = session?.user || null;
+  updateAuthUI(user);
+  // Run database requests only after the auth callback has returned.
+  setTimeout(async () => {
+    if (user) {
+      await refreshRole(user);
+      await loadVoteHistory();
+    }
+  }, 0);
 });  
 (async()=>{  
   const {data,error}=await sb.auth.getSession();  
