@@ -2002,7 +2002,6 @@ function memberCard(m, rank=null) {
             ${voteButton}
             ${rank > 3 ? rankMovementHTML(m.id) : ""}
           </div>
-          <p class="current-votes">${cycleScore(m).toLocaleString()} Current Votes</p>
           <p class="lifetime-votes">Lifetime Votes: ${memberScore(m).toLocaleString()}</p>
         </div>
       </div>
@@ -2856,89 +2855,83 @@ function attachManageMembersEvents() {
 }
 attachManageMembersEvents();
 
- async function loadAdmin(){
-$("adminList").innerHTML = '<div class="panel empty">Checking administrator access…</div>';
-if(!currentUser){
-  $("adminList").innerHTML = '<div class="panel">Please log in with the administrator account.</div>';
-  $("manageMembers").innerHTML = '<div class="panel">Please log in with the administrator account.</div>';
-  return;
-}
-try {
-  await withRequestTimeout(refreshRole(currentUser), "Admin permission check");
-} catch(roleError) {
-  const message = escapeHTML(roleError.message || "Please try again.");
-  $("adminList").innerHTML = `<div class="panel">Could not verify admin access: ${message}</div>`;
-  $("manageMembers").innerHTML = `<div class="panel">Could not verify admin access: ${message}</div>`;
-  return;
-}
-if(currentRole !== "admin"){
-  const detail = window.adminRoleLoadError ? '<br><small>'+escapeHTML(window.adminRoleLoadError)+'</small>' : '';
-  $("adminList").innerHTML = '<div class="panel">Admin access required.'+detail+'</div>';
-  $("manageMembers").innerHTML = '<div class="panel">Admin access required.'+detail+'</div>';
-  return;
-}
-let pendingResult;
-try {
-  pendingResult = await withRequestTimeout(
-    sb.from("members").select("*").eq("status","pending").order("created_at",{ascending:false}),
-    "Admin applications request"
-  );
-} catch(requestError) {
-  $("adminList").innerHTML = `<div class="panel">Could not load applications: ${escapeHTML(requestError.message || "Network error")}</div>`;
-  console.error("Admin applications request failed:", requestError);
-  await loadManageMembers();
-  return;
-}
-const {data,error} = pendingResult;
+let adminLoadPromise = null;
+async function loadAdmin(){
+  if (adminLoadPromise) return adminLoadPromise;
+  adminLoadPromise = (async () => {
+    const adminList = $("adminList");
+    const manageBox = $("manageMembers");
+    adminList.innerHTML = '<div class="panel empty">Verifying administrator access…</div>';
+    if (!currentUser) {
+      adminList.innerHTML = '<div class="panel">Please log in with the administrator account.</div>';
+      manageBox.innerHTML = '<div class="panel">Please log in with the administrator account.</div>';
+      return;
+    }
 
-if(error){
-  $("adminList").innerHTML = `<div class="panel">Could not load applications: ${escapeHTML(error.message)}</div>`;
-  await loadManageMembers();
-  return;
+    // Perform the role lookup directly here. This avoids nested role-check
+    // calls and guarantees that every failure replaces the loading message.
+    let roleResult;
+    try {
+      roleResult = await withRequestTimeout(
+        sb.from("user_profiles").select("role").eq("user_id", currentUser.id).maybeSingle(),
+        "Admin role lookup"
+      );
+      if (roleResult.error) throw roleResult.error;
+    } catch (roleError) {
+      const message = escapeHTML(roleError.message || "Unknown error");
+      adminList.innerHTML = `<div class="panel">Could not verify admin access: ${message}</div>`;
+      manageBox.innerHTML = `<div class="panel">Could not verify admin access: ${message}</div>`;
+      console.error("Admin role lookup failed:", roleError);
+      return;
+    }
+
+    currentRole = roleResult.data?.role || "user";
+    window.adminRoleLoadError = null;
+    $("adminNav").classList.toggle("hidden", currentRole !== "admin");
+    $("roleLabel").textContent = currentRole === "admin" ? "Administrator access enabled." : "Member account";
+    if (currentRole !== "admin") {
+      adminList.innerHTML = '<div class="panel">Admin access required.</div>';
+      manageBox.innerHTML = '<div class="panel">Admin access required.</div>';
+      return;
+    }
+
+    try {
+      const pendingResult = await withRequestTimeout(
+        sb.from("members").select("*").eq("status", "pending").order("created_at", {ascending:false}),
+        "Admin applications request"
+      );
+      if (pendingResult.error) throw pendingResult.error;
+      const data = pendingResult.data || [];
+      $("applicationTotal").textContent = data.length;
+      adminList.innerHTML = data.length ? data.map(m => `
+        <article class="card">
+          <img src="${escapeHTML(m.photo_url || '')}" alt="${escapeHTML(memberName(m))}"
+            style="width:100%;max-width:280px;height:280px;object-fit:cover;border-radius:12px;display:block;margin-bottom:12px;"
+            onerror="this.style.display='none'">
+          <h3>${escapeHTML(memberName(m))}</h3>
+          <p><strong>Username:</strong> ${escapeHTML(m.social_username || "")}</p>
+          <p><strong>Platform:</strong> ${escapeHTML(m.platform || "")}</p>
+          <p><strong>Bio:</strong> ${escapeHTML(m.bio || "")}</p>
+          <p><strong>Profile link:</strong> ${m.social_link ? `<a href="${escapeHTML(m.social_link)}" target="_blank" rel="noopener noreferrer">Open profile</a>` : "Not provided"}</p>
+          <div class="actions">
+            <button class="primary" data-approve="${escapeHTML(m.id)}">Approve</button>
+            <button class="secondary" data-reject="${escapeHTML(m.id)}">Reject</button>
+          </div>
+        </article>`).join("") : '<div class="panel empty">No pending applications.</div>';
+      adminList.querySelectorAll("[data-approve]").forEach(button => button.addEventListener("click", () => moderateMember(button.dataset.approve, true)));
+      adminList.querySelectorAll("[data-reject]").forEach(button => button.addEventListener("click", () => moderateMember(button.dataset.reject, false)));
+      await loadManageMembers();
+    } catch (requestError) {
+      const message = escapeHTML(requestError.message || "Network error");
+      adminList.innerHTML = `<div class="panel">Could not load applications: ${message}</div>`;
+      console.error("Admin applications request failed:", requestError);
+      await loadManageMembers();
+    }
+  })();
+  try { await adminLoadPromise; }
+  finally { adminLoadPromise = null; }
 }
 
-$("applicationTotal").textContent = (data || []).length;
-
-$("adminList").innerHTML = (data || []).length
-? data.map(m => `
-  <article class="card">
-    <img
-      src="${escapeHTML(m.photo_url || '')}"
-      alt="${escapeHTML(memberName(m))}"
-      style="width:100%;max-width:280px;height:280px;object-fit:cover;border-radius:12px;display:block;margin-bottom:12px;"
-      onerror="this.style.display='none'"
-    >
-    <h3>${escapeHTML(memberName(m))}</h3>
-    <p><strong>Username:</strong> ${escapeHTML(m.social_username || "")}</p>
-    <p><strong>Platform:</strong> ${escapeHTML(m.platform || "")}</p>
-    <p><strong>Bio:</strong> ${escapeHTML(m.bio || "")}</p>
-    <p><strong>Profile link:</strong> ${
-      m.social_link
-        ? `<a href="${escapeHTML(m.social_link)}" target="_blank" rel="noopener noreferrer">Open profile</a>`
-        : "Not provided"
-    }</p>
-    <div class="actions">
-      <button class="primary" data-approve="${escapeHTML(m.id)}">Approve</button>
-      <button class="secondary" data-reject="${escapeHTML(m.id)}">Reject</button>
-    </div>
-  </article>
-`).join("")
-: '<div class="panel empty">No pending applications.</div>';
-
-$("adminList").querySelectorAll("[data-approve]").forEach(button => {
-button.addEventListener("click", () =>
-moderateMember(button.dataset.approve,true)
-);
-});
-
-$("adminList").querySelectorAll("[data-reject]").forEach(button => {
-button.addEventListener("click", () =>
-moderateMember(button.dataset.reject,false)
-);
-});
-
-await loadManageMembers();
-}
 async function moderateMember(id,approve){
 if(currentRole!=="admin")return alert("Admin access required.");
 
