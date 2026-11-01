@@ -1517,14 +1517,20 @@ body > * {
     </div>
   </div>
 
-  <div id="homeCategoryStats" class="grid">
-    <div class="panel">
-      <h2 id="memberTotal">—</h2>
-      <p class="muted">Approved profiles</p>
+  <div id="homeCategoryStats">
+    <div class="movement-category-group" id="homeChadsMovementTop">
+      <h2 class="movement-category-title">♛ Chads Ranking — Rank Movement</h2>
+      <div class="movement-panels">
+        <section class="panel movement-panel"><h3>📈 Biggest Rises</h3><div id="biggestRisesChads" class="movement-list"><p class="muted">Loading…</p></div></section>
+        <section class="panel movement-panel"><h3>📉 Biggest Drops</h3><div id="biggestDropsChads" class="movement-list"><p class="muted">Loading…</p></div></section>
+      </div>
     </div>
-    <div class="panel">
-      <h2 id="voteTotal">—</h2>
-      <p class="muted">Total votes</p>
+    <div class="movement-category-group hidden" id="homePotentialMovementTop">
+      <h2 class="movement-category-title">✦ HTN &amp; Potential — Rank Movement</h2>
+      <div class="movement-panels">
+        <section class="panel movement-panel"><h3>📈 Biggest Rises</h3><div id="biggestRisesPotential" class="movement-list"><p class="muted">Loading…</p></div></section>
+        <section class="panel movement-panel"><h3>📉 Biggest Drops</h3><div id="biggestDropsPotential" class="movement-list"><p class="muted">Loading…</p></div></section>
+      </div>
     </div>
   </div>
 
@@ -1540,26 +1546,6 @@ body > * {
 <section class="home-ranking" id="homeChadsSection">
   <div id="homeChadsTop" class="grid">
     <div class="empty">Loading…</div>
-  </div>
-  <div class="movement-category-group">
-    <h2 class="movement-category-title">♛ Chads Ranking — Rank Movement</h2>
-    <div class="movement-panels">
-      <section class="panel movement-panel"><h3>📈 Biggest Rises</h3><div id="biggestRisesChads" class="movement-list"><p class="muted">Loading…</p></div></section>
-      <section class="panel movement-panel"><h3>📉 Biggest Drops</h3><div id="biggestDropsChads" class="movement-list"><p class="muted">Loading…</p></div></section>
-    </div>
-  </div>
-</section>
-
-<section class="home-ranking hidden" id="homePotentialSection">
-  <div id="homePotentialTop" class="grid">
-    <div class="empty">Loading…</div>
-  </div>
-  <div class="movement-category-group">
-    <h2 class="movement-category-title">✦ HTN &amp; Potential — Rank Movement</h2>
-    <div class="movement-panels">
-      <section class="panel movement-panel"><h3>📈 Biggest Rises</h3><div id="biggestRisesPotential" class="movement-list"><p class="muted">Loading…</p></div></section>
-      <section class="panel movement-panel"><h3>📉 Biggest Drops</h3><div id="biggestDropsPotential" class="movement-list"><p class="muted">Loading…</p></div></section>
-    </div>
   </div>
 </section>
 </section>  <section id="rankings" class="page hidden">
@@ -1886,15 +1872,17 @@ document.querySelectorAll(".categoryBtn").forEach(btn =>
   })
 );
  function renderHomeCategoryStats(category) {
-  const approved = publicMembers().filter(m => memberCategory(m) === category);
-  $("memberTotal").textContent = approved.length.toLocaleString();
-  $("voteTotal").textContent = approved.reduce((n,m) => n + memberScore(m), 0).toLocaleString();
+  // Category-specific movement panels are shown in the top home summary area.
+  $("homeChadsMovementTop").classList.toggle("hidden", category !== "chads");
+  $("homePotentialMovementTop").classList.toggle("hidden", category !== "potential");
 }
 document.querySelectorAll(".home-category-btn").forEach(btn => {
   btn.addEventListener("click", () => {
     const category = btn.dataset.homeCategory;
     $("homeChadsSection").classList.toggle("hidden", category !== "chads");
     $("homePotentialSection").classList.toggle("hidden", category !== "potential");
+    $("homeChadsMovementTop").classList.toggle("hidden", category !== "chads");
+    $("homePotentialMovementTop").classList.toggle("hidden", category !== "potential");
     document.querySelectorAll(".home-category-btn").forEach(b => b.classList.toggle("active", b === btn));
     renderHomeCategoryStats(category);
   });
@@ -1934,6 +1922,20 @@ function calculateRankState() {
       const rank = i+1;
       currentRankById.set(String(m.id), rank);
     });
+  }
+  // Rebuild cycle movement on every load from the saved cycle-start rank snapshot.
+  // This survives page refreshes and does not depend on a browser remembering prior ranks.
+  if (movementCycleKey && snapshotRankById.size) {
+    for (const m of publicMembers()) {
+      const id = String(m.id);
+      const startRank = snapshotRankById.get(id);
+      const nowRank = currentRankById.get(id);
+      if (startRank != null && nowRank != null) {
+        const delta = Number(startRank) - Number(nowRank);
+        if (delta !== 0) rankMovementById.set(id, delta);
+        else rankMovementById.delete(id);
+      }
+    }
   }
 }
 function sortedMembers(category){
@@ -2145,9 +2147,6 @@ function renderMovementSections() {
 function renderAll(){
   calculateRankState();
   const approved = publicMembers();
-
-  $("memberTotal").textContent = approved.length;
-  $("voteTotal").textContent = approved.reduce((n,m)=>n+memberScore(m),0);
 
   const activeHomeCategory = document.querySelector(".home-category-btn.active")?.dataset.homeCategory || "chads";
   renderHomeCategoryStats(activeHomeCategory);
