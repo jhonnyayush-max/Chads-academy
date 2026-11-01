@@ -1409,6 +1409,24 @@ body > * {
     opacity: .15;
   }
 }
+
+/* BATTLE WINNER BADGES */
+.battle-winner-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  margin: 8px 4px;
+  border: 1px solid #c6a45b;
+  border-radius: 999px;
+  color: #f2dfb0;
+  background: linear-gradient(135deg, #493719, #171108);
+  font-weight: 800;
+  letter-spacing: .5px;
+  font-size: 13px;
+}
+.battle-wins-count { color: #e4cc91; font-size: 14px; margin: 8px 0; }
+.battle-result { color: #e4cc91; font-weight: 800; margin: 12px 0 0; }
   </style> 
 </head>  
 <body>  
@@ -1689,7 +1707,49 @@ let currentUser = null;
 let currentRole = "user";  
 let currentCategory = "chads";  
 let members = [];  
-let votedIds = new Set();  
+let votedIds = new Set();
+let battleWinStats = new Map();
+
+function getBattleWinBadge(memberId) {
+  const wins = Number(battleWinStats.get(String(memberId)) || 0);
+  if (wins >= 1) return `<span class="battle-winner-badge">🏆 BATTLE WINNER</span>`;
+  return "";
+}
+
+async function refreshBattleWinStats() {
+  const { data, error } = await sb.from("battles")
+    .select("*")
+    .eq("status", "completed");
+
+  if (error) {
+    console.error("Could not load completed battles for winner badges:", error);
+    return;
+  }
+
+  const wins = new Map();
+  for (const battle of (data || [])) {
+    const { data: counts, error: countError } = await sb.rpc("get_battle_vote_counts", {
+      p_battle_id: battle.id
+    });
+    if (countError) {
+      console.error("Could not load completed battle vote counts:", countError);
+      continue;
+    }
+
+    const aVotes = Number((counts || []).find(v => String(v.member_id) === String(battle.contestant_a))?.vote_count || 0);
+    const bVotes = Number((counts || []).find(v => String(v.member_id) === String(battle.contestant_b))?.vote_count || 0);
+
+    // A tied battle does not award a winner badge.
+    if (aVotes > bVotes) {
+      const key = String(battle.contestant_a);
+      wins.set(key, (wins.get(key) || 0) + 1);
+    } else if (bVotes > aVotes) {
+      const key = String(battle.contestant_b);
+      wins.set(key, (wins.get(key) || 0) + 1);
+    }
+  }
+  battleWinStats = wins;
+}
   
 const $ = id => document.getElementById(id);  
 const escapeHTML = value => String(value ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));  
@@ -1799,7 +1859,8 @@ function attachVoteButtons(){
 async function loadMembers() {  
   const {data,error} = await sb.from("members").select("*");  
   if(error){console.error("Loading members:",error); return showLoadError(error);}  
-  members = data || [];  
+  members = data || [];
+  await refreshBattleWinStats();
   renderAll();  
 }  
 function showLoadError(error){
@@ -1833,6 +1894,8 @@ function showLoadError(error){
       }
       <h1>${escapeHTML(memberName(m))}</h1>
       <span class="tag">${escapeHTML(category === "potential" ? "HTN & Potential" : "Chads Ranking")}</span>
+      ${getBattleWinBadge(m.id)}
+      <p class="battle-wins-count">⚔️ Battle Wins: ${Number(battleWinStats.get(String(m.id)) || 0)}</p>
       <h2>${memberScore(m)} Votes</h2>
       ${platform ? `<p>Platform: ${platform}</p>` : ""}
       ${social ? `<p>Username: ${social}</p>` : ""}
@@ -1981,12 +2044,12 @@ async function loadBattles(){
   }
 
   const visibleBattles = data.filter(b =>
-  ["active", "paused"].includes(b.status) ||
+  ["active", "paused", "completed"].includes(b.status) ||
   (currentRole === "admin" && b.status === "pending")
 );
 
   if (!visibleBattles.length) {
-    box.innerHTML = `<p class="muted">No live battles right now.</p>`;
+    box.innerHTML = `<p class="muted">No battles to display right now.</p>`;
     return;
   }
 
@@ -2010,6 +2073,13 @@ async function loadBattles(){
     const votes = counts || [];
     const av = Number(votes.find(v => String(v.member_id) === String(a.id))?.vote_count || 0);
     const bv = Number(votes.find(v => String(v.member_id) === String(b.id))?.vote_count || 0);
+    const battleResult = battle.status === "completed"
+      ? av > bv
+        ? `<p class="battle-result">🏆 Winner: ${escapeHTML(memberName(a))}</p>`
+        : bv > av
+          ? `<p class="battle-result">🏆 Winner: ${escapeHTML(memberName(b))}</p>`
+          : `<p class="battle-result">🤝 Battle ended in a tie</p>`
+      : "";
 
     const remaining = battle.status === "paused"
       ? Number(battle.paused_remaining_seconds || 0)
@@ -2070,6 +2140,7 @@ async function loadBattles(){
       <span class="tag">${escapeHTML(battle.status.toUpperCase())}</span>
       <span class="battle-time">⏳ ${escapeHTML(timeText)}</span>
     </div>
+    ${battleResult}
 
     <div class="actions battle-vote-controls">${voteControls}</div>
     ${adminControls}
