@@ -2060,7 +2060,21 @@ async function loadRankingCycleState() {
   } else latestRankSnapshots = [];
   rankMovementById = new Map();
   if (movementCycleKey) {
-    const { data: movementRows, error: movementError } = await sb.from("rank_movement").select("member_id, category, delta").eq("cycle_key", movementCycleKey);
+    const { data: allMovementRows, error: movementError } = await sb.from("rank_movement")
+  .select("cycle_key, member_id, category, delta");
+
+if (movementError) {
+  console.error("Could not load saved rank movement:", movementError.message);
+  window.rankMovementLoadError = movementError.message;
+} else {
+  window.rankMovementLoadError = null;
+  const movementRows = (allMovementRows || []).filter(row =>
+    Date.parse(row.cycle_key) === Date.parse(movementCycleKey)
+  );
+  movementRows.forEach(row =>
+    rankMovementById.set(String(row.member_id), Number(row.delta || 0))
+  );
+ }
     if (movementError) {
       console.error("Could not load saved rank movement:", movementError.message);
       window.rankMovementLoadError = movementError.message;
