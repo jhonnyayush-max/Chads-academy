@@ -2003,24 +2003,8 @@ async function syncPersistentRankMovement() {
   }
 
   calculateRankState();
-
-  // A SECURITY DEFINER RPC performs the write on the database so every
-  // authenticated member can update the shared movement table regardless of
-  // client-side RLS permissions. The first call in a cycle creates baselines;
-  // later calls preserve initial_rank and update only current_rank/delta.
-  if (currentUser) {
-    const { error: syncError } = await sb.rpc("sync_rank_movement", {
-      p_cycle_key: movementCycleKey
-    });
-    if (syncError) {
-      console.error("Movement sync RPC failed:", syncError.message);
-      window.rankMovementLoadError = syncError.message;
-    } else {
-      window.rankMovementLoadError = null;
-    }
-  }
-
-  const { data: rows, error } = await sb.from("rank_movement")
+  const approvedMembers = publicMembers();
+  let { data: rows, error } = await sb.from("rank_movement")
     .select("member_id, category, initial_rank, current_rank, delta")
     .eq("cycle_key", movementCycleKey);
 
@@ -2029,14 +2013,83 @@ async function syncPersistentRankMovement() {
     window.rankMovementLoadError = error.message;
     return;
   }
+  window.rankMovementLoadError = null;
+
+  // The first authenticated visit in a cycle records a durable starting-rank
+  // baseline for every currently approved member. Existing rows are preserved;
+  // subsequent rank changes are measured against this baseline until the cycle
+  // key changes at the next scheduled vote refresh.
+  if (currentUser) {
+    const knownIds = new Set((rows || []).map(row => String(row.member_id)));
+    const baselines = approvedMembers
+      .filter(member => !knownIds.has(String(member.id)))
+      .map(member => ({
+        cycle_key: movementCycleKey,
+        member_id: member.id,
+        category: memberCategory(member),
+        initial_rank: Number(currentRankById.get(String(member.id)) || 0),
+        current_rank: Number(currentRankById.get(String(member.id)) || 0),
+        delta: 0,
+        updated_at: new Date().toISOString()
+      }));
+
+    if (baselines.length) {
+      const { error: baselineError } = await sb.from("rank_movement")
+        .upsert(baselines, { onConflict: "cycle_key,member_id", ignoreDuplicates: true });
+      if (baselineError) console.error("Movement baseline save failed:", baselineError.message);
+    }
+
+    // Re-read after baseline creation, then compare today's rank with the
+    // original rank stored for this cycle. This is independent of realtime
+    // event order and does not rely on a temporary in-memory previous-rank map.
+    const refreshed = await sb.from("rank_movement")
+      .select("member_id, category, initial_rank, current_rank, delta")
+      .eq("cycle_key", movementCycleKey);
+    if (refreshed.error) {
+      console.error("Movement refresh failed:", refreshed.error.message);
+      window.rankMovementLoadError = refreshed.error.message;
+      return;
+    }
+    rows = refreshed.data || [];
+
+    const updates = [];
+    for (const row of rows) {
+      const id = String(row.member_id);
+      const currentRank = currentRankById.get(id);
+      if (currentRank == null) continue;
+      const delta = Number(row.initial_rank) - Number(currentRank);
+      if (Number(row.current_rank) !== Number(currentRank) || Number(row.delta) !== delta) {
+        updates.push({
+          cycle_key: movementCycleKey,
+          member_id: row.member_id,
+          category: row.category,
+          initial_rank: Number(row.initial_rank),
+          current_rank: Number(currentRank),
+          delta,
+          updated_at: new Date().toISOString()
+        });
+      }
+    }
+    if (updates.length) {
+      const { error: updateError } = await sb.from("rank_movement")
+        .upsert(updates, { onConflict: "cycle_key,member_id" });
+      if (updateError) {
+        console.error("Movement update failed:", updateError.message);
+        window.rankMovementLoadError = updateError.message;
+      }
+      const updatedById = new Map(updates.map(row => [String(row.member_id), Number(row.delta)]));
+      for (const [id, delta] of updatedById) {
+        const existing = rows.find(row => String(row.member_id) === id);
+        if (existing) existing.delta = delta;
+      }
+    }
+  }
 
   rankMovementById = new Map();
   (rows || []).forEach(row => {
-    const delta = Number(row.delta || 0);
-    if (delta !== 0) rankMovementById.set(String(row.member_id), delta);
+    if (Number(row.delta || 0) !== 0) rankMovementById.set(String(row.member_id), Number(row.delta));
   });
 }
-
 async function loadMembers() {
   const {data,error} = await sb.from("members").select("*");
   if(error){console.error("Loading members:",error); return showLoadError(error);}
@@ -2612,22 +2665,13 @@ $("logoutButton").addEventListener("click",async()=>{
 });  
 async function loadManageMembers(){
   const box=$("manageMembers");
-  box.innerHTML='<div class="panel muted">Loading Chad List…</div>';
 
   if(!currentUser||currentRole!=="admin"){
     box.innerHTML="";
     return;
   }
 
-  let result;
-  try {
-    result = await sb.from("members").select("*").order("created_at", { ascending: true });
-  } catch (requestError) {
-    box.innerHTML=`<div class="panel">Could not load Chad List: ${escapeHTML(requestError.message || "Network error")}</div>`;
-    console.error("Manage Chad List request failed:", requestError);
-    return;
-  }
-  const {data,error}=result;
+  const {data,error}=await sb.from("members").select("*");
 
   if(error){
     box.innerHTML=
@@ -2725,8 +2769,6 @@ async function loadManageMembers(){
   });
 }
  async function loadAdmin(){
-$("adminList").innerHTML='<div class="empty">Loading applications…</div>';
-$("manageMembers").innerHTML='<div class="empty">Loading Chad List…</div>';
 if(!currentUser || currentRole !== "admin"){
 $("adminList").innerHTML =
 '<div class="panel">Admin access required.</div>';
@@ -2734,17 +2776,11 @@ $("manageMembers").innerHTML = "";
 return;
 }
 
-let pendingResult;
-try {
-  pendingResult = await sb.from("members").select("*")
-    .eq("status","pending").order("created_at",{ascending:false});
-} catch (requestError) {
-  $("adminList").innerHTML=`<div class="panel">Could not load applications: ${escapeHTML(requestError.message || "Network error")}</div>`;
-  console.error("Admin applications request failed:", requestError);
-  await loadManageMembers();
-  return;
-}
-const {data,error} = pendingResult;
+const {data,error} = await sb
+.from("members")
+.select("*")
+.eq("status","pending")
+.order("created_at",{ascending:false});
 
 if(error){
 $("adminList").innerHTML =
