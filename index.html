@@ -1988,7 +1988,8 @@ function attachVoteButtons(){
   });
 } 
 function updateLiveRankMovement(previousRanks) {
-  rankMovementById = new Map();
+  // Keep the most recent movement visible; do not clear it on every data reload.
+  // This also prevents a second Realtime refresh from erasing the arrow immediately.
   if (previousRanks && !isRankFrozen) {
     for (const [memberId, newRank] of currentRankById.entries()) {
       const oldRank = previousRanks.get(memberId);
@@ -1996,6 +1997,11 @@ function updateLiveRankMovement(previousRanks) {
         rankMovementById.set(memberId, oldRank - newRank);
       }
     }
+  }
+  // Remove movement badges for profiles that are no longer approved/present.
+  const activeIds = new Set(publicMembers().map(m => String(m.id)));
+  for (const memberId of rankMovementById.keys()) {
+    if (!activeIds.has(memberId)) rankMovementById.delete(memberId);
   }
   lastKnownRankById = new Map(currentRankById);
 }
