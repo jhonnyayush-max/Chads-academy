@@ -2716,75 +2716,146 @@ $("logoutButton").addEventListener("click",async()=>{
   if(error)return showMessage("loginMessage",error.message,true);  
   updateAuthUI(null);showMessage("loginMessage","Logged out successfully.");  
 });  
-async function loadManageMembers(){
-  const box=$("manageMembers");
+let manageMembersBusy = false;
+let manageMembersEventsAttached = false;
+
+function renderManageMembers(rows) {
+  const box = $("manageMembers");
   if (!box) return;
-  box.innerHTML = '<div class="panel empty">Checking administrator access…</div>';
-  if (!currentUser) {
-    box.innerHTML = '<div class="panel">Please log in with the administrator account.</div>';
+  const managed = (rows || []).filter(member =>
+    member.status === "removed" || isApproved(member)
+  );
+
+  if (!managed.length) {
+    box.innerHTML = '<div class="panel empty">No approved or removed members found.</div>';
     return;
   }
-  try {
-    await withRequestTimeout(refreshRole(currentUser), "Admin permission check");
-  } catch (roleError) {
-    box.innerHTML = `<div class="panel">Could not verify admin access: ${escapeHTML(roleError.message || "Please try again.")}</div>`;
-    return;
-  }
-  if (currentRole !== "admin") {
-    box.innerHTML = `<div class="panel">Admin access required.${window.adminRoleLoadError ? '<br><small>'+escapeHTML(window.adminRoleLoadError)+'</small>' : ''}</div>`;
-    return;
-  }
-  box.innerHTML = '<div class="panel empty">Loading members…</div>';
-  let result;
-  try {
-    result = await withRequestTimeout(sb.from("members").select("*"), "Manage Chad List request");
-  } catch(requestError) {
-    box.innerHTML = `<div class="panel">Could not load members: ${escapeHTML(requestError.message || "Network error")}</div>`;
-    console.error("Manage Chad List request failed:", requestError);
-    return;
-  }
-  const {data,error}=result;
-  if(error){
-    box.innerHTML = `<div class="panel">Could not load members: ${escapeHTML(error.message)}</div>`;
-    return;
-  }
-  const list=(data||[]).filter(m=>isApproved(m)||m.status==="removed");
-  if(!list.length){
-    box.innerHTML='<div class="panel empty">No members to manage.</div>';
-    return;
-  }
-  box.innerHTML=list.map(m=>{
-    const removed=m.status==="removed";
-    const category=memberCategory(m);
-    const rank=removed ? "Removed" : "#"+(sortedMembers(category).findIndex(x=>String(x.id)===String(m.id))+1);
-    return `<article class="card"><h3>${escapeHTML(memberName(m))}</h3><p class="small">Rank: ${rank}</p><p class="muted">${removed?"Not in public list":"Active member"}</p><div class="actions">${removed ? `<button class="primary" data-restore-member="${escapeHTML(m.id)}">♻️ Restore</button>` : `<button class="secondary" data-remove-member="${escapeHTML(m.id)}">🗑️ Remove</button>`}</div></article>`;
+
+  managed.sort((a, b) => {
+    const aRemoved = a.status === "removed";
+    const bRemoved = b.status === "removed";
+    if (aRemoved !== bRemoved) return aRemoved ? 1 : -1;
+    return memberName(a).localeCompare(memberName(b));
+  });
+
+  box.innerHTML = managed.map(member => {
+    const removed = member.status === "removed";
+    const category = memberCategory(member);
+    const categoryLabel = category === "potential" ? "HTN & Potential" : "Chads Ranking";
+    const rank = removed ? "Removed" : (() => {
+      const position = sortedMembers(category).findIndex(item => String(item.id) === String(member.id)) + 1;
+      return position > 0 ? `#${position}` : "—";
+    })();
+    const photo = memberPhoto(member);
+    return `
+      <article class="card manage-member-card">
+        <div class="member">
+          ${photo ? `<img class="avatar" src="${escapeHTML(photo)}" alt="" onerror="this.style.visibility='hidden'">` : ""}
+          <div style="min-width:0;flex:1">
+            <h3>${escapeHTML(memberName(member))}</h3>
+            <p class="small">${escapeHTML(categoryLabel)} · ${escapeHTML(rank)}</p>
+            <p class="muted">${removed ? "Removed from public rankings" : "Active member"}</p>
+            <div class="actions">
+              ${removed
+                ? `<button class="primary" type="button" data-manager-action="restore" data-member-id="${escapeHTML(member.id)}">♻️ Restore</button>`
+                : `<button class="secondary" type="button" data-manager-action="remove" data-member-id="${escapeHTML(member.id)}">🗑️ Remove</button>`}
+            </div>
+          </div>
+        </div>
+      </article>`;
   }).join("");
-  box.querySelectorAll("[data-remove-member]").forEach(button=>{
-    button.addEventListener("click",async()=>{
-      const id=button.dataset.removeMember;
-      const member=list.find(m=>String(m.id)===String(id));
-      if(!member)return;
-      const rank=sortedMembers(memberCategory(member)).findIndex(m=>String(m.id)===String(id))+1;
-      if(!confirm(`Remove ${memberName(member)} (Rank #${rank}) from Chad List?\n\nTheir record will be kept so they can be restored later.`))return;
-      button.disabled=true;
-      const {error}=await sb.from("members").update({approved:false,status:"removed"}).eq("id",id);
-      if(error){button.disabled=false;alert("Could not remove member: "+error.message);return;}
-      await loadMembers(); await loadAdmin(); alert("Member removed from Chad List.");
-    });
-  });
-  box.querySelectorAll("[data-restore-member]").forEach(button=>{
-    button.addEventListener("click",async()=>{
-      const id=button.dataset.restoreMember;
-      const member=list.find(m=>String(m.id)===String(id));
-      if(!member)return;
-      if(!confirm(`Restore ${memberName(member)} to Chad List?`))return;
-      button.disabled=true;
-      const {error}=await sb.from("members").update({approved:true,status:"approved"}).eq("id",id);
-      if(error){button.disabled=false;alert("Could not restore member: "+error.message);return;}
-      await loadMembers(); await loadAdmin(); alert("Member restored successfully.");
-    });
-  });
 }
+
+async function loadManageMembers() {
+  const box = $("manageMembers");
+  if (!box) return;
+  if (manageMembersBusy) return;
+
+  if (!currentUser) {
+    box.innerHTML = '<div class="panel">Log in with the administrator account to manage members.</div>';
+    return;
+  }
+  // loadAdmin() is the single source of truth for refreshing the role.
+  // Avoid a second refreshRole() here: parallel role checks were resetting
+  // currentRole to "user" while this panel was loading.
+  if (currentRole !== "admin") {
+    box.innerHTML = '<div class="panel">Admin access required. Please reopen the Admin Panel after signing in.</div>';
+    return;
+  }
+
+  manageMembersBusy = true;
+  box.innerHTML = '<div class="panel empty">Loading members…</div>';
+  try {
+    const result = await withRequestTimeout(
+      sb.from("members").select("*"),
+      "Manage Chad List request",
+      15000
+    );
+    if (result.error) throw result.error;
+    renderManageMembers(result.data || []);
+  } catch (error) {
+    console.error("Manage Chad List load failed:", error);
+    box.innerHTML = `<div class="panel">Could not load Manage Chad List: ${escapeHTML(error.message || "Unknown error")}</div>`;
+  } finally {
+    manageMembersBusy = false;
+  }
+}
+
+async function handleManageMemberAction(button) {
+  const box = $("manageMembers");
+  if (!box || button.disabled) return;
+  if (!currentUser || currentRole !== "admin") {
+    alert("Admin access required. Please sign in again.");
+    return;
+  }
+
+  const action = button.dataset.managerAction;
+  const id = button.dataset.memberId;
+  if (!id || !["remove", "restore"].includes(action)) return;
+
+  const memberNameText = button.closest(".card")?.querySelector("h3")?.textContent || "this member";
+  const prompt = action === "remove"
+    ? `Remove ${memberNameText} from the public ranking? Their record and votes will be kept, so you can restore them later.`
+    : `Restore ${memberNameText} to the public ranking?`;
+  if (!confirm(prompt)) return;
+
+  button.disabled = true;
+  const oldText = button.textContent;
+  button.textContent = action === "remove" ? "Removing…" : "Restoring…";
+  try {
+    const update = action === "remove"
+      ? { approved: false, status: "removed" }
+      : { approved: true, status: "approved" };
+    const result = await withRequestTimeout(
+      sb.from("members").update(update).eq("id", id).select("id,status,approved").single(),
+      action === "remove" ? "Remove member request" : "Restore member request",
+      15000
+    );
+    if (result.error) throw result.error;
+    if (!result.data) throw new Error("The database did not confirm the change. Refresh and check the member status.");
+
+    await loadMembers();
+    await loadManageMembers();
+    alert(action === "remove" ? "Member removed. You can restore them from this panel." : "Member restored successfully.");
+  } catch (error) {
+    console.error(`Manage member ${action} failed:`, error);
+    alert(`Could not ${action} member: ${error.message || "Unknown error"}`);
+    button.disabled = false;
+    button.textContent = oldText;
+  }
+}
+
+function attachManageMembersEvents() {
+  const box = $("manageMembers");
+  if (!box || manageMembersEventsAttached) return;
+  box.addEventListener("click", event => {
+    const button = event.target.closest("button[data-manager-action]");
+    if (button && box.contains(button)) handleManageMemberAction(button);
+  });
+  manageMembersEventsAttached = true;
+}
+attachManageMembersEvents();
+
  async function loadAdmin(){
 $("adminList").innerHTML = '<div class="panel empty">Checking administrator access…</div>';
 if(!currentUser){
