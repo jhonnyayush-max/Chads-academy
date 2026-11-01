@@ -1548,6 +1548,12 @@ body > * {
     <div class="empty">Loading…</div>
   </div>
 </section>
+
+<section class="home-ranking hidden" id="homePotentialSection">
+  <div id="homePotentialTop" class="grid">
+    <div class="empty">Loading…</div>
+  </div>
+</section>
 </section>  <section id="rankings" class="page hidden">
   <div class="ranking-header">
     <span class="tag">THE HALL OF RANKINGS</span>
@@ -2061,8 +2067,13 @@ async function loadRankingCycleState() {
   rankMovementById = new Map();
   if (movementCycleKey) {
     const { data: movementRows, error: movementError } = await sb.from("rank_movement").select("member_id, category, delta").eq("cycle_key", movementCycleKey);
-    if (movementError) console.warn("Could not load saved rank movement:", movementError.message);
-    (movementRows || []).forEach(row => rankMovementById.set(String(row.member_id), Number(row.delta || 0)));
+    if (movementError) {
+      console.error("Could not load saved rank movement:", movementError.message);
+      window.rankMovementLoadError = movementError.message;
+    } else {
+      window.rankMovementLoadError = null;
+      (movementRows || []).forEach(row => rankMovementById.set(String(row.member_id), Number(row.delta || 0)));
+    }
   }
   calculateRankState();
 }
@@ -2140,8 +2151,13 @@ function renderMovementSections() {
     const drops = changed.filter(x => x.delta < 0).sort((a,b) => a.delta-b.delta).slice(0,5);
     const suffix = category === "chads" ? "Chads" : "Potential";
     const riseEl = $("biggestRises" + suffix), dropEl = $("biggestDrops" + suffix);
-    if (riseEl) riseEl.innerHTML = html(rises,"up");
-    if (dropEl) dropEl.innerHTML = html(drops,"down");
+    const loadError = window.rankMovementLoadError;
+    if (riseEl) riseEl.innerHTML = loadError
+      ? `<p class="movement-empty">Could not load movement: ${escapeHTML(loadError)}</p>`
+      : html(rises,"up");
+    if (dropEl) dropEl.innerHTML = loadError
+      ? `<p class="movement-empty">Could not load movement: ${escapeHTML(loadError)}</p>`
+      : html(drops,"down");
   }
 }
 function renderAll(){
