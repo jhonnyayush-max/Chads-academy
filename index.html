@@ -2903,7 +2903,8 @@ async function loadAdmin(){
       );
       if (pendingResult.error) throw pendingResult.error;
       const data = pendingResult.data || [];
-      $("applicationTotal").textContent = data.length;
+     const applicationTotalEl = $("applicationTotal");
+if (applicationTotalEl) applicationTotalEl.textContent = data.length;
       adminList.innerHTML = data.length ? data.map(m => `
         <article class="card">
           <img src="${escapeHTML(m.photo_url || '')}" alt="${escapeHTML(memberName(m))}"
