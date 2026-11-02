@@ -2231,6 +2231,16 @@ function showLoadError(error){
   showPage("memberProfile");
   attachVoteButtons();
  }
+ async function copyMemberVoteLink(id) {
+  const voteLink = `${location.origin}${location.pathname}?member=${encodeURIComponent(id)}`;
+
+  try {
+    await navigator.clipboard.writeText(voteLink);
+    alert("Vote link copied! Share it with your friends.");
+  } catch (error) {
+    prompt("Copy this vote link:", voteLink);
+  }
+ }
 function renderRankings(){  
   const list=sortedMembers(currentCategory);  
   $("rankList").innerHTML=list.length?list.map((m,i)=>memberCard(m,i+1)).join(""):`<div class="panel empty">No approved profiles in this category yet.</div>`;  
