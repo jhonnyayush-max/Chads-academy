@@ -3231,6 +3231,19 @@ sb.auth.onAuthStateChange((_event, session) => {
   await loadMyEditableProfile();
   }
   await loadMembers();
+ const sharedMemberId = new URLSearchParams(location.search).get("member");
+
+if (sharedMemberId) {
+  const sharedMember = publicMembers().find(
+    m => String(m.id) === String(sharedMemberId)
+  );
+
+  if (sharedMember) {
+    openMemberProfile(sharedMember.id);
+  } else {
+    alert("This member profile is not available.");
+  }
+}
   startRankingRealtimeUpdates();
   // Pending count is visible to admins only.  
   if(currentRole==="admin")await loadAdmin(); 
