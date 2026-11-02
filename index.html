@@ -3156,8 +3156,7 @@ $("editProfileForm").addEventListener("submit", async function(e) {
 
       const { error: uploadError } = await sb.storage
         .from("member-photos")
-        .upload(filePath, photoFile, { upsert: true });
-
+        .upload(filePath, photoFile, { upsert: false });
       if (uploadError) throw uploadError;
 
       const { data: publicData } = sb.storage
