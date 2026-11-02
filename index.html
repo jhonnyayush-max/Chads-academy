@@ -2672,8 +2672,23 @@ if (!name || !photoFile || !social || !platform || !bio) {
   const { error } = await sb.from("members").insert(payload);
 
   if (error) {
-    showMessage("joinMessage", "Application could not be submitted: " + error.message, true);
-    return;
+  if (
+    error.code === "23505" &&
+    (error.message || "").includes("members_one_active_profile_per_user")
+  ) {
+    showMessage(
+      "joinMessage",
+      "You already have a profile on Chad Academy. You can apply again after your current profile is removed by an admin.",
+      true
+    );
+  } else {
+    showMessage(
+      "joinMessage",
+      "Application could not be submitted: " + error.message,
+      true
+    );
+  }
+  return;
   }
 
   e.target.reset();
