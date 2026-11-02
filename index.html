@@ -2221,6 +2221,7 @@ function showLoadError(error){
       ${social ? `<p>Username: ${social}</p>` : ""}
       ${bio ? `<p>${bio}</p>` : ""}
       ${link ? `<a class="secondary" href="${escapeHTML(link)}" target="_blank" rel="noopener noreferrer">Visit Social Profile ↗</a>` : ""}
+      ${currentUser ? `<button class="primary voteBtn" data-id="${escapeHTML(m.id)}">▲ Vote</button>` : ""}
       <button class="secondary copyVoteLinkBtn" data-id="${escapeHTML(m.id)}">
   🔗 Copy Vote Link
 </button>
