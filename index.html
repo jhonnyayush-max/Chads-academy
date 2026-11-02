@@ -2015,7 +2015,12 @@ function attachVoteButtons(){
       castVote(btn.dataset.id);
     });
   });
-
+document.querySelectorAll(".copyVoteLinkBtn").forEach(btn => {
+  btn.addEventListener("click", event => {
+    event.stopPropagation();
+    copyMemberVoteLink(btn.dataset.id);
+  });
+});
   document.querySelectorAll("[data-page='account']").forEach(btn=>{
     btn.addEventListener("click",()=>showPage("account"));
   });
