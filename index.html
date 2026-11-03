@@ -2379,6 +2379,8 @@ async function loadBattles(){
 
   const visibleBattles = data.filter(b =>
   ["active", "paused"].includes(b.status) ||
+  (b.status === "completed" && b.ends_at &&
+    Date.now() - new Date(b.ends_at).getTime() < 24 * 60 * 60 * 1000) ||
   (currentRole === "admin" && b.status === "pending")
 );
 
