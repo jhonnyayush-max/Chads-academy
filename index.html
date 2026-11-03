@@ -1405,38 +1405,24 @@ button,
     width: 17px;
   }
   }
- /* ===== DARK BLUE GREEK THEME ===== */
+ /* ===== GOLDEN GREEK TEMPLE BACKGROUND ===== */
 
 body {
   position: relative;
   background:
-    radial-gradient(ellipse at 50% 30%, rgba(40,85,145,.20), transparent 55%),
-    linear-gradient(110deg, #050b18, #101d35 50%, #050b18) !important;
-  background-attachment: fixed !important;
+    linear-gradient(rgba(5, 4, 2, .25), rgba(5, 4, 2, .25)),
+    url("golden-greek-bg.png") center center / cover no-repeat fixed !important;
 }
 
-/* Subtle blue marble pillars */
+/* Image already contains Greek pillars */
 body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  opacity: .16;
-  background:
-    linear-gradient(90deg,
-      transparent 0 3%,
-      #8ba9d0 3.2% 3.5%,
-      #263d5d 3.6% 4.4%,
-      #9bb6d8 4.5% 5.5%,
-      #263d5d 5.6% 6.2%,
-      transparent 6.4% 100%),
-    linear-gradient(90deg,
-      transparent 0 93.6%,
-      #9bb6d8 93.8% 94.5%,
-      #263d5d 94.6% 95.4%,
-      #8ba9d0 95.5% 96%,
-      transparent 96.2% 100%);
+  content: none !important;
+}
+
+/* Keep website content above background */
+body > * {
+  position: relative;
+  z-index: 1;
 }
 
 
