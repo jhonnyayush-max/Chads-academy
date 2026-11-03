@@ -1405,26 +1405,43 @@ button,
     width: 17px;
   }
   }
- /* ===== GOLDEN GREEK TEMPLE BACKGROUND ===== */
+/* ===== FULL PAGE GREEK TEMPLE BACKGROUND ===== */
 
 body {
   position: relative;
   background:
-    linear-gradient(rgba(5, 4, 2, .25), rgba(5, 4, 2, .25)),
-    url("file_00000000d5cc8211a8968aa1b4c3c117.png") center center / cover no-repeat fixed !important;
+    radial-gradient(ellipse at 50% 35%, rgba(190,155,85,.13), transparent 48%),
+    linear-gradient(90deg, #090908, #17140e 50%, #090908) !important;
+  background-attachment: fixed !important;
 }
 
-/* Image already contains Greek pillars */
+/* Marble pillars on both sides */
 body::before {
-  content: none !important;
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: .22;
+  background:
+    linear-gradient(90deg,
+      transparent 0 3%,
+      #b9a77e 3.2% 3.5%,
+      #514936 3.6% 4.4%,
+      #c7b58c 4.5% 5.5%,
+      #514936 5.6% 6.2%,
+      transparent 6.4% 100%),
+    linear-gradient(90deg,
+      transparent 0 93.6%,
+      #c7b58c 93.8% 94.5%,
+      #514936 94.6% 95.4%,
+      #b9a77e 95.5% 96%,
+      transparent 96.2% 100%),
+    repeating-linear-gradient(90deg,
+      transparent 0 20px,
+      rgba(210,190,145,.12) 21px 23px,
+      transparent 24px 29px);
 }
-
-/* Keep website content above background */
-body > * {
-  position: relative;
-  z-index: 1;
-}
-
 
 /* Keep website content above background */
 body > * {
@@ -1434,30 +1451,9 @@ body > * {
 
 /* Mobile adjustment */
 @media (max-width: 600px) {
-  body::after {
-    width: 180px;
-    height: 380px;
-  }
-
   body::before {
     opacity: .15;
   }
-}
-
-/* BATTLE WINNER BADGES */
-.battle-winner-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 7px 12px;
-  margin: 8px 4px;
-  border: 1px solid #c6a45b;
-  border-radius: 999px;
-  color: #f2dfb0;
-  background: linear-gradient(135deg, #493719, #171108);
-  font-weight: 800;
-  letter-spacing: .5px;
-  font-size: 13px;
 }
 .battle-wins-count { color: #e4cc91; font-size: 14px; margin: 8px 0; }
 .battle-result { color: #e4cc91; font-weight: 800; margin: 12px 0 0; }
