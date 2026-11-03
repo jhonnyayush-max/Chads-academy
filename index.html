@@ -1405,47 +1405,39 @@ button,
     width: 17px;
   }
   }
-  /* ===== FULL PAGE GREEK TEMPLE BACKGROUND ===== */
+ /* ===== DARK BLUE GREEK THEME ===== */
 
 body {
   position: relative;
   background:
-    radial-gradient(ellipse at 50% 35%, rgba(190,155,85,.13), transparent 48%),
-    linear-gradient(90deg, #090908, #17140e 50%, #090908) !important;
+    radial-gradient(ellipse at 50% 30%, rgba(40,85,145,.20), transparent 55%),
+    linear-gradient(110deg, #050b18, #101d35 50%, #050b18) !important;
   background-attachment: fixed !important;
 }
 
-/* Marble pillars on both sides */
+/* Subtle blue marble pillars */
 body::before {
   content: "";
   position: fixed;
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  opacity: .22;
+  opacity: .16;
   background:
-    /* Left pillar */
     linear-gradient(90deg,
       transparent 0 3%,
-      #b9a77e 3.2% 3.5%,
-      #514936 3.6% 4.4%,
-      #c7b58c 4.5% 5.5%,
-      #514936 5.6% 6.2%,
+      #8ba9d0 3.2% 3.5%,
+      #263d5d 3.6% 4.4%,
+      #9bb6d8 4.5% 5.5%,
+      #263d5d 5.6% 6.2%,
       transparent 6.4% 100%),
-    /* Right pillar */
     linear-gradient(90deg,
       transparent 0 93.6%,
-      #c7b58c 93.8% 94.5%,
-      #514936 94.6% 95.4%,
-      #b9a77e 95.5% 96%,
-      transparent 96.2% 100%),
-    /* Pillar grooves */
-    repeating-linear-gradient(90deg,
-      transparent 0 20px,
-      rgba(210,190,145,.12) 21px 23px,
-      transparent 24px 29px);
+      #9bb6d8 93.8% 94.5%,
+      #263d5d 94.6% 95.4%,
+      #8ba9d0 95.5% 96%,
+      transparent 96.2% 100%);
 }
-
 
 
 /* Keep website content above background */
