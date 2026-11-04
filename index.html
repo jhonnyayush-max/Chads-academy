@@ -2235,7 +2235,7 @@ function renderMovementSections() {
   }).join("") : `<p class="movement-empty">No rank changes yet.</p>`;
   for (const category of ["chads", "potential"]) {
     const changed = publicMembers().filter(m => memberCategory(m) === category).map(m => ({ member:m, delta:Number(rankMovementById.get(String(m.id))||0) })).filter(x => x.delta !== 0);
-    const rises = changed.filter(x => x.delta > 0).sort((a,b) => b.delta-a.delta).slice(0,5);
+    const rises = changed.filter(x => x.delta > 0).sort((a,b) => b.delta-a.delta).slice(0,1);
     const drops = changed.filter(x => x.delta < 0).sort((a,b) => a.delta-b.delta).slice(0,5);
     const suffix = category === "chads" ? "Chads" : "Potential";
     const riseEl = $("biggestRises" + suffix), dropEl = $("biggestDrops" + suffix);
