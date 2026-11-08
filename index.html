@@ -2587,21 +2587,35 @@ $("joinForm")?.addEventListener("submit",async e=>{
   if(!currentUser){showMessage("joinMessage","Please create an account or log in before applying.",true);return showPage("account");}  
     const name = $("joinName").value.trim();
   const photoFile = $("joinPhoto").files[0];
+  const paymentScreenshotFile = $("joinPaymentScreenshot").files[0];
   const social = $("joinSocial").value.trim();
   const platform = $("joinPlatform").value;
   const link = safeHttpUrl($("joinLink").value.trim());
   const category = $("joinCategory").value;
   const bio = $("joinBio").value.trim();
 
-if (!name || !photoFile || !social || !platform || !bio) {
-  return showMessage("joinMessage", 
-    "Missing fields: " +
-    (!name ? "Name " : "") +
-    (!photoFile ? "Photo " : "") +
-    (!social ? "Social Username " : "") +
-    (!platform ? "Platform " : "") +
-    (!bio ? "Bio " : ""), true);
-     }
+if (!paymentScreenshotFile) {
+    return showMessage("joinMessage", "Please upload your payment screenshot.", true);
+  }
+
+  if (!name || !photoFile || !social || !platform || !bio) {
+    return showMessage("joinMessage",
+      "Missing fields: " +
+      (!name ? "Name " : "") +
+      (!photoFile ? "Photo " : "") +
+      (!social ? "Social Username " : "") +
+      (!platform ? "Platform " : "") +
+      (!bio ? "Bio " : ""), true);
+  }
+
+  if (!paymentScreenshotFile.type.startsWith("image/")) {
+    return showMessage("joinMessage", "Please select a valid payment screenshot image.", true);
+  }
+
+  if (paymentScreenshotFile.size > 5 * 1024 * 1024) {
+    return showMessage("joinMessage", "Payment screenshot must be smaller than 5 MB.", true);
+  }
+
   if (!photoFile.type.startsWith("image/")) {
     return showMessage("joinMessage", "Please select an image file.", true);
   }
@@ -2635,10 +2649,36 @@ if (!name || !photoFile || !social || !platform || !bio) {
     return showMessage("joinMessage", "Could not get the photo URL.", true);
   }
 
+  const safePaymentFileName = paymentScreenshotFile.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+  const paymentFilePath = `${currentUser.id}/payment-${Date.now()}-${safePaymentFileName}`;
+
+  const { data: paymentUploadData, error: paymentUploadError } = await sb.storage
+    .from("member-photos")
+    .upload(paymentFilePath, paymentScreenshotFile, {
+      contentType: paymentScreenshotFile.type,
+      upsert: false
+    });
+
+  if (paymentUploadError) {
+    showMessage("joinMessage", "Payment screenshot upload failed: " + paymentUploadError.message, true);
+    return;
+  }
+
+  const { data: paymentPublicData } = sb.storage
+    .from("member-photos")
+    .getPublicUrl(paymentUploadData.path);
+
+  const paymentScreenshotUrl = safeHttpUrl(paymentPublicData.publicUrl);
+
+  if (!paymentScreenshotUrl) {
+    return showMessage("joinMessage", "Could not get the payment screenshot URL.", true);
+  }
+
   const payload = {
     user_id: currentUser.id,
     display_name: name,
     photo_url: photo,
+    payment_screenshot_url: paymentScreenshotUrl,
     social_username: social,
     platform,
     social_link: link || null,
@@ -2925,6 +2965,16 @@ if (applicationTotalEl) applicationTotalEl.textContent = data.length;
             style="width:100%;max-width:280px;height:280px;object-fit:cover;border-radius:12px;display:block;margin-bottom:12px;"
             onerror="this.style.display='none'">
           <h3>${escapeHTML(memberName(m))}</h3>
+          <div style="margin:14px 0;">
+            <p><strong>Payment Screenshot:</strong></p>
+            ${m.payment_screenshot_url
+              ? `<a href="${escapeHTML(m.payment_screenshot_url)}" target="_blank" rel="noopener noreferrer">
+                   <img src="${escapeHTML(m.payment_screenshot_url)}" alt="Payment screenshot for ${escapeHTML(memberName(m))}"
+                     style="width:100%;max-width:420px;max-height:520px;object-fit:contain;background:#080808;border:1px solid #80602c;border-radius:10px;display:block;">
+                   <span>Open full-size payment screenshot</span>
+                 </a>`
+              : '<p class="status err">Payment screenshot missing</p>'}
+          </div>
           <p><strong>Username:</strong> ${escapeHTML(m.social_username || "")}</p>
           <p><strong>Platform:</strong> ${escapeHTML(m.platform || "")}</p>
           <p><strong>Bio:</strong> ${escapeHTML(m.bio || "")}</p>
