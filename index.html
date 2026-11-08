@@ -1493,7 +1493,23 @@ body > * {
 .movement-item .movement-name { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:700; }
 .movement-empty { color:var(--muted); font-size:13px; }
 #backNotice { position:fixed; left:50%; bottom:24px; transform:translateX(-50%); z-index:9999; background:#242424; color:#fff; border:1px solid #777; border-radius:10px; padding:12px 18px; box-shadow:0 8px 30px #0008; display:none; }
-@media(max-width:700px){ .movement-panels{grid-template-columns:1fr;} }
+@media(max-width:700px){ .movement-panels{grid-template-columns:1fr;} } 
+  /* Different Greek background for each page */
+body:has(#home:not(.hidden)) {
+  background: linear-gradient(#0008,#000b), url("greek-home.jpg") center/cover fixed;
+}
+body:has(#rankings:not(.hidden)) {
+  background: linear-gradient(#0008,#000b), url("greek-rankings.jpg") center/cover fixed;
+}
+body:has(#battles:not(.hidden)) {
+  background: linear-gradient(#0008,#000b), url("greek-battles.jpg") center/cover fixed;
+}
+body:has(#join:not(.hidden)) {
+  background: linear-gradient(#0008,#000b), url("greek-apply.jpg") center/cover fixed;
+}
+body:has(#account:not(.hidden)) {
+  background: linear-gradient(#0008,#000b), url("greek-login.jpg") center/cover fixed;
+}
   </style> 
 </head>  
 <body>  
