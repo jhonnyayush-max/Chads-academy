@@ -1495,20 +1495,20 @@ body > * {
 #backNotice { position:fixed; left:50%; bottom:24px; transform:translateX(-50%); z-index:9999; background:#242424; color:#fff; border:1px solid #777; border-radius:10px; padding:12px 18px; box-shadow:0 8px 30px #0008; display:none; }
 @media(max-width:700px){ .movement-panels{grid-template-columns:1fr;} } 
   /* Different Greek background for each page */
-body:has(#home:not(.hidden)) {
-  background: linear-gradient(#0008,#000b), url("greek-home.jpg") center/cover fixed;
+body[data-page="home"] {
+  background: linear-gradient(#0008,#000b), url("./greek-home.jpg") center/cover fixed !important;
 }
-body:has(#rankings:not(.hidden)) {
-  background: linear-gradient(#0008,#000b), url("greek-rankings.jpg") center/cover fixed;
+body[data-page="rankings"] {
+  background: linear-gradient(#0008,#000b), url("./greek-rankings.jpg") center/cover fixed !important;
 }
-body:has(#battles:not(.hidden)) {
-  background: linear-gradient(#0008,#000b), url("greek-battles.jpg") center/cover fixed;
+body[data-page="battles"] {
+  background: linear-gradient(#0008,#000b), url("./greek-battles.jpg") center/cover fixed !important;
 }
-body:has(#join:not(.hidden)) {
-  background: linear-gradient(#0008,#000b), url("greek-apply.jpg") center/cover fixed;
+body[data-page="join"] {
+  background: linear-gradient(#0008,#000b), url("./greek-apply.jpg") center/cover fixed !important;
 }
-body:has(#account:not(.hidden)) {
-  background: linear-gradient(#0008,#000b), url("greek-login.jpg") center/cover fixed;
+body[data-page="account"] {
+  background: linear-gradient(#0008,#000b), url("./greek-login.jpg") center/cover fixed !important;
 }
   </style> 
 </head>  
