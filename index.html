@@ -1885,6 +1885,7 @@ function showPage(id, pushHistory = true) {
     history.pushState({ chadPage: id }, "", "#" + id);
   }
   currentPageId = id;
+ document.body.dataset.page = id;
   document.querySelectorAll(".page").forEach(p => p.classList.toggle("hidden", p.id !== id));
   window.scrollTo({top:0,behavior:"smooth"});
   if (id === "rankings") renderRankings();
