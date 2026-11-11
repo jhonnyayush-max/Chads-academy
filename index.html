@@ -1628,7 +1628,7 @@ body > * {
 <div class="panel" style="text-align:center;">
   <h2 style="color:#f4dfaa;">PAYMENT</h2>
 
-  <img src="./payment-qr.jpg"
+  <img class="hidden" src="./payment-qr.jpg"
        alt="Payment QR Code"
        style="width:100%;max-width:300px;background:white;padding:10px;border-radius:12px;">
 
@@ -1661,9 +1661,10 @@ body > * {
         <input type="file" id="joinPhoto" accept="image/*" required>
       </div>
 
-<div class="field">
+<!-- TEMPORARILY HIDDEN: remove class="hidden" to restore payment screenshot upload -->
+<div class="field hidden">
   <label for="joinPaymentScreenshot">Payment Screenshot</label>
-  <input type="file" id="joinPaymentScreenshot" accept="image/*" required>
+  <input type="file" id="joinPaymentScreenshot" accept="image/*">
 </div>
      
       <div class="field">
@@ -2606,19 +2607,20 @@ $("createBattleBtn")?.addEventListener("click", async () => {
   showMessage("battleAdminMessage", "Battle created! Press Start to begin.");
   await loadBattles();
 });
+const PAYMENT_UPLOAD_ENABLED = false; // Set true and remove the two HTML hidden classes to restore payment collection.
 $("joinForm")?.addEventListener("submit",async e=>{
   e.preventDefault();  
   if(!currentUser){showMessage("joinMessage","Please create an account or log in before applying.",true);return showPage("account");}  
     const name = $("joinName").value.trim();
   const photoFile = $("joinPhoto").files[0];
-  const paymentScreenshotFile = $("joinPaymentScreenshot").files[0];
+  const paymentScreenshotFile = $("joinPaymentScreenshot")?.files?.[0] || null;
   const social = $("joinSocial").value.trim();
   const platform = $("joinPlatform").value;
   const link = safeHttpUrl($("joinLink").value.trim());
   const category = $("joinCategory").value;
   const bio = $("joinBio").value.trim();
 
-if (!paymentScreenshotFile) {
+if (PAYMENT_UPLOAD_ENABLED && !paymentScreenshotFile) {
     return showMessage("joinMessage", "Please upload your payment screenshot.", true);
   }
 
@@ -2630,14 +2632,6 @@ if (!paymentScreenshotFile) {
       (!social ? "Social Username " : "") +
       (!platform ? "Platform " : "") +
       (!bio ? "Bio " : ""), true);
-  }
-
-  if (!paymentScreenshotFile.type.startsWith("image/")) {
-    return showMessage("joinMessage", "Please select a valid payment screenshot image.", true);
-  }
-
-  if (paymentScreenshotFile.size > 5 * 1024 * 1024) {
-    return showMessage("joinMessage", "Payment screenshot must be smaller than 5 MB.", true);
   }
 
   if (!photoFile.type.startsWith("image/")) {
@@ -2673,29 +2667,32 @@ if (!paymentScreenshotFile) {
     return showMessage("joinMessage", "Could not get the photo URL.", true);
   }
 
-  const safePaymentFileName = paymentScreenshotFile.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-  const paymentFilePath = `${currentUser.id}/payment-${Date.now()}-${safePaymentFileName}`;
+  let paymentScreenshotUrl = null;
+  if (PAYMENT_UPLOAD_ENABLED && paymentScreenshotFile) {
+    const safePaymentFileName = paymentScreenshotFile.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+    const paymentFilePath = `${currentUser.id}/payment-${Date.now()}-${safePaymentFileName}`;
 
-  const { data: paymentUploadData, error: paymentUploadError } = await sb.storage
-    .from("member-photos")
-    .upload(paymentFilePath, paymentScreenshotFile, {
-      contentType: paymentScreenshotFile.type,
-      upsert: false
-    });
+    const { data: paymentUploadData, error: paymentUploadError } = await sb.storage
+      .from("member-photos")
+      .upload(paymentFilePath, paymentScreenshotFile, {
+        contentType: paymentScreenshotFile.type,
+        upsert: false
+      });
 
-  if (paymentUploadError) {
-    showMessage("joinMessage", "Payment screenshot upload failed: " + paymentUploadError.message, true);
-    return;
-  }
+    if (paymentUploadError) {
+      showMessage("joinMessage", "Payment screenshot upload failed: " + paymentUploadError.message, true);
+      return;
+    }
 
-  const { data: paymentPublicData } = sb.storage
-    .from("member-photos")
-    .getPublicUrl(paymentUploadData.path);
+    const { data: paymentPublicData } = sb.storage
+      .from("member-photos")
+      .getPublicUrl(paymentUploadData.path);
 
-  const paymentScreenshotUrl = safeHttpUrl(paymentPublicData.publicUrl);
 
-  if (!paymentScreenshotUrl) {
-    return showMessage("joinMessage", "Could not get the payment screenshot URL.", true);
+    paymentScreenshotUrl = safeHttpUrl(paymentPublicData.publicUrl);
+    if (!paymentScreenshotUrl) {
+      return showMessage("joinMessage", "Could not get the payment screenshot URL.", true);
+    }
   }
 
   const payload = {
