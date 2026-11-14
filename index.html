@@ -1455,7 +1455,7 @@ body > * {
     opacity: .15;
   }
 }
-.battle-wins-count { color: #e4cc91; font-size: 14px; margin: 8px 0; }
+.battle-wins-count { color: var(--muted); font-size: 14px; font-weight: 400; margin: 8px 0; }
 .battle-result { color: #e4cc91; font-weight: 800; margin: 12px 0 0; }
 
 /* Category-exclusive medal frames and movement indicators — thicker premium frames */
@@ -1629,10 +1629,6 @@ body > * {
   <h2 style="color:#f4dfaa;letter-spacing:3px;">CONTACT</h2>
 
   <p style="font-size:17px;">
-    📸 Instagram: <strong>@chad_academyfr</strong>
-  </p>
-
-  <p style="font-size:17px;">
     ✈️ Telegram: <strong>@Ummwhyayush</strong>
   </p>
 </div>
@@ -1795,26 +1791,34 @@ let currentRole = "user";
 let currentCategory = "chads";  
 let members = [];  
 let votedIds = new Set();
-let battleWinStats = new Map();
+let battleStatsByMember = new Map();
 
-function getBattleWinBadge(memberId) {
-  const wins = Number(battleWinStats.get(String(memberId)) || 0);
-  if (wins >= 1) return `<span class="battle-winner-badge">🏆 BATTLE WINNER</span>`;
-  return "";
+function getMemberBattleStats(memberId) {
+  return battleStatsByMember.get(String(memberId)) || { played: 0, wins: 0 };
 }
 
 async function refreshBattleWinStats() {
   const { data, error } = await sb.from("battles")
-    .select("*")
+    .select("id,contestant_a,contestant_b,status")
     .eq("status", "completed");
 
   if (error) {
-    console.error("Could not load completed battles for winner badges:", error);
+    console.error("Could not load completed battle statistics:", error);
     return;
   }
 
-  const wins = new Map();
+  const stats = new Map();
+  const getStats = id => {
+    const key = String(id);
+    if (!stats.has(key)) stats.set(key, { played: 0, wins: 0 });
+    return stats.get(key);
+  };
+
   for (const battle of (data || [])) {
+    // Count each completed battle for both participants.
+    getStats(battle.contestant_a).played += 1;
+    getStats(battle.contestant_b).played += 1;
+
     const { data: counts, error: countError } = await sb.rpc("get_battle_vote_counts", {
       p_battle_id: battle.id
     });
@@ -1826,16 +1830,14 @@ async function refreshBattleWinStats() {
     const aVotes = Number((counts || []).find(v => String(v.member_id) === String(battle.contestant_a))?.vote_count || 0);
     const bVotes = Number((counts || []).find(v => String(v.member_id) === String(battle.contestant_b))?.vote_count || 0);
 
-    // A tied battle does not award a winner badge.
     if (aVotes > bVotes) {
-      const key = String(battle.contestant_a);
-      wins.set(key, (wins.get(key) || 0) + 1);
+      getStats(battle.contestant_a).wins += 1;
     } else if (bVotes > aVotes) {
-      const key = String(battle.contestant_b);
-      wins.set(key, (wins.get(key) || 0) + 1);
+      getStats(battle.contestant_b).wins += 1;
     }
   }
-  battleWinStats = wins;
+
+  battleStatsByMember = stats;
 }
   
 const $ = id => document.getElementById(id);  
@@ -2209,8 +2211,7 @@ function showLoadError(error){
       }
       <h1>${escapeHTML(memberName(m))}</h1>
       <span class="tag">${escapeHTML(category === "potential" ? "HTN & Potential" : "Chads Ranking")}</span>
-      ${getBattleWinBadge(m.id)}
-      <p class="battle-wins-count">⚔️ Battle Wins: ${Number(battleWinStats.get(String(m.id)) || 0)}</p>
+      <p class="battle-wins-count">Battles: ${getMemberBattleStats(m.id).played} · Wins: ${getMemberBattleStats(m.id).wins}</p>
       <h2 class="profile-current-votes">${cycleScore(m).toLocaleString()} Current Votes</h2>
       <div class="profile-rank-movement">${rankMovementHTML(m.id)}</div>
       <p class="profile-lifetime-votes">Lifetime Votes: ${memberScore(m).toLocaleString()}</p>
@@ -2821,7 +2822,8 @@ function renderManageMembers(rows) {
             <div class="actions">
               ${removed
                 ? `<button class="primary" type="button" data-manager-action="restore" data-member-id="${escapeHTML(member.id)}">♻️ Restore</button>`
-                : `<button class="secondary" type="button" data-manager-action="remove" data-member-id="${escapeHTML(member.id)}">🗑️ Remove</button>`}
+                : `<button class="secondary" type="button" data-manager-action="remove" data-member-id="${escapeHTML(member.id)}">🗑️ Remove</button>
+                   <button class="secondary" type="button" data-manager-action="change-category" data-member-id="${escapeHTML(member.id)}" data-target-category="${category === "potential" ? "chads" : "potential"}">${category === "potential" ? "Move to Chads" : "Move to HTN"}</button>`}
             </div>
           </div>
         </div>
@@ -2874,32 +2876,69 @@ async function handleManageMemberAction(button) {
 
   const action = button.dataset.managerAction;
   const id = button.dataset.memberId;
-  if (!id || !["remove", "restore"].includes(action)) return;
+  if (!id || !["remove", "restore", "change-category"].includes(action)) return;
 
   const memberNameText = button.closest(".card")?.querySelector("h3")?.textContent || "this member";
+  const targetCategory = button.dataset.targetCategory;
+  if (action === "change-category" && !["chads", "potential"].includes(targetCategory)) return;
   const prompt = action === "remove"
     ? `Remove ${memberNameText} from the public ranking? Their record and votes will be kept, so you can restore them later.`
-    : `Restore ${memberNameText} to the public ranking?`;
+    : action === "restore"
+      ? `Restore ${memberNameText} to the public ranking?`
+      : `Move ${memberNameText} to ${targetCategory === "potential" ? "HTN & Potential" : "Chads Ranking"}? Their votes and score will remain unchanged.`;
   if (!confirm(prompt)) return;
 
   button.disabled = true;
   const oldText = button.textContent;
-  button.textContent = action === "remove" ? "Removing…" : "Restoring…";
+  button.textContent = action === "remove" ? "Removing…" : action === "restore" ? "Restoring…" : "Moving…";
   try {
-    const update = action === "remove"
-      ? { approved: false, status: "removed" }
-      : { approved: true, status: "approved" };
-    const result = await withRequestTimeout(
-      sb.from("members").update(update).eq("id", id).select("id,status,approved").single(),
-      action === "remove" ? "Remove member request" : "Restore member request",
-      15000
-    );
+    let result;
+
+    if (action === "change-category") {
+      // Enforce the 1,000-member destination limit before changing category.
+      const countResult = await withRequestTimeout(
+        sb.from("members")
+          .select("id", { count: "exact", head: true })
+          .eq("category", targetCategory)
+          .or("status.eq.approved,approved.eq.true"),
+        "Destination category capacity check",
+        15000
+      );
+      if (countResult.error) throw countResult.error;
+      if ((countResult.count ?? 0) >= 1000) {
+        throw new Error(targetCategory === "potential"
+          ? "HTN & Potential is full (1,000 members)."
+          : "Chads Ranking is full (1,000 members).");
+      }
+
+      // Intentionally update ONLY category: votes, score and other member data stay untouched.
+      result = await withRequestTimeout(
+        sb.from("members").update({ category: targetCategory }).eq("id", id)
+          .select("id,category").single(),
+        "Change member category request",
+        15000
+      );
+    } else {
+      const update = action === "remove"
+        ? { approved: false, status: "removed" }
+        : { approved: true, status: "approved" };
+      result = await withRequestTimeout(
+        sb.from("members").update(update).eq("id", id).select("id,status,approved").single(),
+        action === "remove" ? "Remove member request" : "Restore member request",
+        15000
+      );
+    }
+
     if (result.error) throw result.error;
     if (!result.data) throw new Error("The database did not confirm the change. Refresh and check the member status.");
 
     await loadMembers();
     await loadManageMembers();
-    alert(action === "remove" ? "Member removed. You can restore them from this panel." : "Member restored successfully.");
+    alert(action === "remove"
+      ? "Member removed. You can restore them from this panel."
+      : action === "restore"
+        ? "Member restored successfully."
+        : `Member moved to ${targetCategory === "potential" ? "HTN & Potential" : "Chads Ranking"}. Votes and score were preserved.`);
   } catch (error) {
     console.error(`Manage member ${action} failed:`, error);
     alert(`Could not ${action} member: ${error.message || "Unknown error"}`);
